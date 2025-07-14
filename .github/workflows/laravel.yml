@@ -35,7 +35,7 @@ jobs:
       run: |
         cd test-app
         composer config repositories.local '{"type": "path", "url": "../", "options": {"symlink": true}}'
-        composer require siberfx/turkiye-il-ilce-mahalle:dev-main
+        composer require siberfx/turkiye-address:dev-main
       env:
         COMPOSER_MEMORY_LIMIT: -1
 
