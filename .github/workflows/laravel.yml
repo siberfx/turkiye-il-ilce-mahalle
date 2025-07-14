@@ -44,13 +44,5 @@ jobs:
         cd test-app
         php artisan turkiye:publish-assets --force
 
-    - name: Copy package files
-      run: |
-        rsync -a --exclude='test-app' ./ test-app/packages/turkiye-adresler-json/
-      shell: bash
-
     - name: Run package tests
-      run: |
-        cd test-app
-        php artisan vendor:publish --all
-        ./vendor/bin/phpunit ../packages/turkiye-adresler-json/tests
+      run: composer test
