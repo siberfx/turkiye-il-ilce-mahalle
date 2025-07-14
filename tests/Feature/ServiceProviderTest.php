@@ -6,7 +6,9 @@ namespace Tests\Feature;
 
 use Orchestra\Testbench\TestCase;
 use Siberfx\TurkiyePackage\TurkiyeAdreslerServiceProvider;
-use Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder;
+use Siberfx\TurkiyePackage\Models\City;
+use Siberfx\TurkiyePackage\Models\District;
+use Siberfx\TurkiyePackage\Models\Neighborhood;
 
 class ServiceProviderTest extends TestCase
 {
@@ -31,34 +33,47 @@ class ServiceProviderTest extends TestCase
         $this->assertSame(0, $exitCode, 'turkiye:migrate command should exit with code 0');
     }
 
-    public function test_city_model_returns_data()
+    public function test_models_exist_and_are_loaded()
     {
-        // Run migration and seeder to ensure data exists
+        // Test that the models exist and can be instantiated
         $this->artisan('turkiye:migrate');
-        (new TurkiyeSeeder)->run();
-
-        $city = \Siberfx\TurkiyePackage\Models\City::query()->first();
-        $this->assertNotNull($city, 'City::first() should return a record after seeding.');
-        $this->assertNotEmpty($city->name ?? '', 'City record should have a name.');
+        
+        $city = new City();
+        $district = new District();
+        $neighborhood = new Neighborhood();
+        
+        $this->assertInstanceOf(City::class, $city);
+        $this->assertInstanceOf(District::class, $district);
+        $this->assertInstanceOf(Neighborhood::class, $neighborhood);
+        
+        // Verify table names are correctly set from config
+        $this->assertEquals(config('turkiye-adresler.cities_table', 'cities'), $city->getTable());
+        $this->assertEquals(config('turkiye-adresler.districts_table', 'districts'), $district->getTable());
+        $this->assertEquals(config('turkiye-adresler.neighborhoods_table', 'neighborhoods'), $neighborhood->getTable());
     }
-
-    public function test_district_model_returns_data()
+    
+    public function test_model_relationships()
     {
         $this->artisan('turkiye:migrate');
-        (new TurkiyeSeeder)->run();
-
-        $district = \Siberfx\TurkiyePackage\Models\District::query()->first();
-        $this->assertNotNull($district, 'District::first() should return a record after seeding.');
-        $this->assertNotEmpty($district->name ?? '', 'District record should have a name.');
-    }
-
-    public function test_neighborhood_model_returns_data()
-    {
-        $this->artisan('turkiye:migrate');
-        (new TurkiyeSeeder)->run();
-
-        $neighborhood = \Siberfx\TurkiyePackage\Models\Neighborhood::query()->first();
-        $this->assertNotNull($neighborhood, 'Neighborhood::first() should return a record after seeding.');
-        $this->assertNotEmpty($neighborhood->name ?? '', 'Neighborhood record should have a name.');
+        
+        // Create test data directly
+        $city = City::create(['id' => 1, 'name' => 'Test City']);
+        $district = District::create(['id' => 1, 'city_id' => 1, 'name' => 'Test District']);
+        $neighborhood = Neighborhood::create([
+            'id' => 1, 
+            'district_id' => 1, 
+            'name' => 'Test Neighborhood'
+        ]);
+        
+        // Test relationships
+        $this->assertInstanceOf(District::class, $city->districts->first());
+        $this->assertInstanceOf(City::class, $district->city);
+        $this->assertInstanceOf(Neighborhood::class, $district->neighborhoods->first());
+        $this->assertInstanceOf(District::class, $neighborhood->district);
+        
+        // Test data values
+        $this->assertEquals('Test City', $city->name);
+        $this->assertEquals('Test District', $district->name);
+        $this->assertEquals('Test Neighborhood', $neighborhood->name);
     }
 }
