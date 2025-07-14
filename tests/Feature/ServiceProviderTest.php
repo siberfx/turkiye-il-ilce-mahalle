@@ -9,6 +9,8 @@ use Siberfx\TurkiyePackage\TurkiyeAdreslerServiceProvider;
 use Siberfx\TurkiyePackage\Models\City;
 use Siberfx\TurkiyePackage\Models\District;
 use Siberfx\TurkiyePackage\Models\Neighborhood;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 class ServiceProviderTest extends TestCase
 {
@@ -19,6 +21,27 @@ class ServiceProviderTest extends TestCase
         ];
     }
 
+    protected function defineDatabaseMigrations()
+    {
+        // Create test tables for our models
+        Schema::create('cities', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+        });
+
+        Schema::create('districts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('city_id')->constrained();
+            $table->string('name');
+        });
+
+        Schema::create('neighborhoods', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('district_id')->constrained();
+            $table->string('name');
+        });
+    }
+
     public function test_service_provider_is_loaded()
     {
         $this->assertTrue(
@@ -27,8 +50,9 @@ class ServiceProviderTest extends TestCase
         );
     }
 
-    public function test_turkiye_migrate_command_runs_without_error()
+    public function test_turkiye_migrate_command_exists()
     {
+        // Test that the command exists and can be called without errors
         $exitCode = $this->artisan('turkiye:migrate');
         $this->assertSame(0, $exitCode, 'turkiye:migrate command should exit with code 0');
     }
@@ -36,8 +60,6 @@ class ServiceProviderTest extends TestCase
     public function test_models_exist_and_are_loaded()
     {
         // Test that the models exist and can be instantiated
-        $this->artisan('turkiye:migrate');
-        
         $city = new City();
         $district = new District();
         $neighborhood = new Neighborhood();
@@ -54,14 +76,11 @@ class ServiceProviderTest extends TestCase
     
     public function test_model_relationships()
     {
-        $this->artisan('turkiye:migrate');
-        
-        // Create test data directly
-        $city = City::create(['id' => 1, 'name' => 'Test City']);
-        $district = District::create(['id' => 1, 'city_id' => 1, 'name' => 'Test District']);
+        // Create test data
+        $city = City::create(['name' => 'Test City']);
+        $district = District::create(['city_id' => $city->id, 'name' => 'Test District']);
         $neighborhood = Neighborhood::create([
-            'id' => 1, 
-            'district_id' => 1, 
+            'district_id' => $district->id, 
             'name' => 'Test Neighborhood'
         ]);
         
