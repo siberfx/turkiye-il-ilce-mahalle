@@ -44,5 +44,8 @@ jobs:
         cd test-app
         php artisan turkiye:publish-assets --force
 
+    - name: Install package dependencies
+      run: composer install --prefer-dist --no-interaction --no-progress
+
     - name: Run package tests
       run: composer test
