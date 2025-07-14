@@ -1,5 +1,5 @@
 {
-    "name": "siberfx/turkiye-address",
+    "name": "siberfx/turkiye-adresler-json",
     "description": "Laravel package for seeding Turkish address (city, district, neighborhood) tables from SQL dumps.",
     "type": "library",
     "license": "MIT",
@@ -24,5 +24,21 @@
     "require": {
         "php": ">=8.2",
         "illuminate/support": ">=10.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
+        "phpunit/phpunit": "^10.0"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "keywords": [
+        "laravel", "turkey", "address", "city", "district", "neighborhood", "seeder", "sql"
+    ],
+    "support": {
+        "issues": "https://github.com/siberfx/turkiye-il-ilce-mahalle/issues",
+        "source": "https://github.com/siberfx/turkiye-il-ilce-mahalle"
+    },
+    "scripts": {
+        "test": "phpunit"
     }
 }
