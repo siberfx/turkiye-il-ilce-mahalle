@@ -39,6 +39,11 @@ jobs:
       env:
         COMPOSER_MEMORY_LIMIT: -1
 
+    - name: Publish config and SQL dumps
+      run: |
+        cd test-app
+        php artisan turkiye:publish-assets --force
+
     - name: Copy package files
       run: |
         rsync -a --exclude='test-app' ./ test-app/packages/turkiye-adresler-json/

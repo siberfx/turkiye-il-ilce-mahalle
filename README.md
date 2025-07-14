@@ -18,7 +18,14 @@ composer require siberfx/turkiye-address
 ],
 ```
 
-3. **Config ve Seeder Dosyalarını Yayınlayın**
+3. **Config ve Seeder/SQL Dump Dosyalarını Yayınlayın**
+
+Aşağıdaki yeni toplu komut ile hem config hem de SQL dump dosyalarını kolayca yayınlayabilirsiniz:
+```bash
+php artisan turkiye:publish-assets
+```
+
+Alternatif olarak klasik vendor:publish komutlarını da kullanabilirsiniz:
 ```bash
 php artisan vendor:publish --provider="Siberfx\\TurkiyePackage\\TurkiyeAdreslerServiceProvider" --tag=config
 php artisan vendor:publish --provider="Siberfx\\TurkiyePackage\\TurkiyeAdreslerServiceProvider" --tag=seeders

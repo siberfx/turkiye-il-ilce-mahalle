@@ -25,5 +25,13 @@ class TurkiyeAdreslerServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/../config/turkiye-package.php', 'turkiye-adresler'
         );
+
+        // Register console commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Siberfx\TurkiyePackage\Console\Commands\RunTurkiyeMigrations::class,
+                \Siberfx\TurkiyePackage\Console\Commands\PublishTurkiyeAssets::class,
+            ]);
+        }
     }
 }
