@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use Orchestra\Testbench\TestCase;
 use Siberfx\TurkiyePackage\TurkiyeAdreslerServiceProvider;
+use Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder;
 
 class ServiceProviderTest extends TestCase
 {
@@ -34,7 +35,7 @@ class ServiceProviderTest extends TestCase
     {
         // Run migration and seeder to ensure data exists
         $this->artisan('turkiye:migrate');
-        (new \Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder)->run();
+        (new TurkiyeSeeder)->run();
 
         $city = \Siberfx\TurkiyePackage\Models\City::query()->first();
         $this->assertNotNull($city, 'City::first() should return a record after seeding.');
@@ -44,7 +45,7 @@ class ServiceProviderTest extends TestCase
     public function test_district_model_returns_data()
     {
         $this->artisan('turkiye:migrate');
-        (new \Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder)->run();
+        (new TurkiyeSeeder)->run();
 
         $district = \Siberfx\TurkiyePackage\Models\District::query()->first();
         $this->assertNotNull($district, 'District::first() should return a record after seeding.');
@@ -54,7 +55,7 @@ class ServiceProviderTest extends TestCase
     public function test_neighborhood_model_returns_data()
     {
         $this->artisan('turkiye:migrate');
-        (new \Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder)->run();
+        (new TurkiyeSeeder)->run();
 
         $neighborhood = \Siberfx\TurkiyePackage\Models\Neighborhood::query()->first();
         $this->assertNotNull($neighborhood, 'Neighborhood::first() should return a record after seeding.');
