@@ -1,0 +1,28 @@
+{
+    "name": "siberfx/turkiye-address",
+    "description": "Laravel package for seeding Turkish address (city, district, neighborhood) tables from SQL dumps.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Selim Görmüş",
+            "email": "info@siberfx.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Siberfx\\TurkiyePackage\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Siberfx\\TurkiyePackage\\TurkiyeAdreslerServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": ">=8.2",
+        "illuminate/support": ">=10.0"
+    }
+}
