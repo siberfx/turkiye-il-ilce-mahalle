@@ -39,6 +39,6 @@
         "source": "https://github.com/siberfx/turkiye-il-ilce-mahalle"
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "php vendor/bin/phpunit"
     }
 }

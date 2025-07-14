@@ -14,6 +14,13 @@ use Illuminate\Database\Schema\Blueprint;
 
 class ServiceProviderTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+    }
+
     protected function getPackageProviders($app)
     {
         return [
@@ -53,8 +60,7 @@ class ServiceProviderTest extends TestCase
     public function test_turkiye_migrate_command_exists()
     {
         // Test that the command exists and can be called without errors
-        $exitCode = $this->artisan('turkiye:migrate');
-        $this->assertSame(0, $exitCode, 'turkiye:migrate command should exit with code 0');
+        $this->artisan('turkiye:migrate')->assertExitCode(0);
     }
 
     public function test_models_exist_and_are_loaded()
