@@ -13,8 +13,8 @@ return new class extends Migration
         $districtsTable = $config['districts_table'] ?? 'districts';
         $citiesTable = $config['cities_table'] ?? 'cities';
 
-        $relationCityName = Str::singular($citiesTable) . '_id';
-        $relationDistrictName = Str::singular($districtsTable) . '_id';
+        $relationCityName = $config['cities_relation_id'] ?? 'city_id';
+        $relationDistrictName = $config['districts_relation_id'] ?? 'district_id';
 
 
         Schema::create($tableName, function (Blueprint $table) use ($districtsTable, $citiesTable, $relationCityName, $relationDistrictName) {
@@ -26,18 +26,18 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
 
             // Indexes
-            $table->index('city_id');
-            $table->index('district_id');
+            $table->index($relationCityName);
+            $table->index($relationDistrictName);
             $table->index('slug');
             $table->index('is_active');
 
             // Foreign key constraints
-            $table->foreign('city_id')
+            $table->foreign($relationCityName)
                   ->references('id')
                   ->on($citiesTable)
                   ->onDelete('cascade');
 
-            $table->foreign('district_id')
+            $table->foreign($relationDistrictName)
                   ->references('id')
                   ->on($districtsTable)
                   ->onDelete('cascade');

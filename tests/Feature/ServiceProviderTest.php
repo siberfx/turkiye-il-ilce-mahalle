@@ -49,14 +49,14 @@ class ServiceProviderTest extends TestCase
         Schema::create('districts', function (Blueprint $table) {
             $table->id();
             $table->foreignId(config('turkiye-package.cities_relation_id', 'city_id'))
-                  ->constrained('cities');
+                  ->constrained(config('turkiye-package.cities_table', 'cities'));
             $table->string('name');
         });
 
         Schema::create('neighborhoods', function (Blueprint $table) {
             $table->id();
             $table->foreignId(config('turkiye-package.districts_relation_id', 'district_id'))
-                  ->constrained('districts');
+                  ->constrained(config('turkiye-package.districts_table', 'districts'));
             $table->string('name');
         });
     }

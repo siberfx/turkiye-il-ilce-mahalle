@@ -13,6 +13,12 @@ class {{ class }} extends Seeder
     protected $cityModel;
     protected $districtModel;
     protected $neighborhoodModel;
+    protected $citiesTable;
+    protected $districtsTable;
+    protected $neighborhoodsTable;
+    protected $citiesRelationId;
+    protected $districtsRelationId;
+    protected $neighborhoodsRelationId;
 
     public function __construct()
     {
@@ -22,6 +28,13 @@ class {{ class }} extends Seeder
         $this->cityModel = $this->config['city_model'] ?? 'Siberfx\\TurkiyePackage\\Models\\City';
         $this->districtModel = $this->config['district_model'] ?? 'Siberfx\\TurkiyePackage\\Models\\District';
         $this->neighborhoodModel = $this->config['neighborhood_model'] ?? 'Siberfox\\TurkiyePackage\\Models\\Neighborhood';
+       
+        $this->citiesTable = $this->config['cities_table'] ?? 'cities';
+        $this->districtsTable = $this->config['districts_table'] ?? 'districts';
+        $this->neighborhoodsTable = $this->config['neighborhoods_table'] ?? 'neighborhoods';
+        $this->citiesRelationId = $this->config['cities_relation_id'] ?? 'city_id';
+        $this->districtsRelationId = $this->config['districts_relation_id'] ?? 'district_id';
+        $this->neighborhoodsRelationId = $this->config['neighborhoods_relation_id'] ?? 'neighborhood_id';
     }
 
     /**
@@ -70,7 +83,7 @@ class {{ class }} extends Seeder
 
     private function importCities(): void
     {
-        $table = $this->config['cities_table'] ?? 'cities';
+        $table = $this->citiesTable;
         $citiesSql = File::get(base_path('{{ cities_path }}'));
 
         // Extract data from SQL - match format: ('1','ADANA')
@@ -86,8 +99,6 @@ class {{ class }} extends Seeder
                 'name' => $name,
                 'slug' => Str::slug($name),
                 'is_active' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
             ];
 
             if (count($cities) >= 100) {
@@ -103,7 +114,7 @@ class {{ class }} extends Seeder
 
     private function importDistricts(): void
     {
-        $table = $this->config['districts_table'] ?? 'districts';
+        $table = $this->districtsTable;
         $districtsSql = File::get(base_path('{{ districts_path }}'));
 
         // Extract data from SQL - match format: ('1101','37','ABANA')
@@ -118,12 +129,10 @@ class {{ class }} extends Seeder
 
             $districts[] = [
                 'id' => $id,
-                'city_id' => $cityId,
+                $this->citiesRelationId => $cityId,
                 'name' => $name,
                 'slug' => Str::slug($name),
                 'is_active' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
             ];
 
             if (count($districts) >= 100) {
@@ -139,8 +148,8 @@ class {{ class }} extends Seeder
 
     private function importNeighborhoods(): void
     {
-        $table = $this->config['neighborhoods_table'] ?? 'neighborhoods';
-        $districtsTable = $this->config['districts_table'] ?? 'districts';
+        $table = $this->neighborhoodsTable;
+        $districtsTable = $this->districtsTable;
         $neighborhoodsSql = File::get(base_path('{{ neighborhoods_path }}'));
 
         // Get all districts with their city_id
@@ -163,13 +172,11 @@ class {{ class }} extends Seeder
 
             $neighborhoods[] = [
                 'id' => $id,
-                'district_id' => $districtId,
-                'city_id' => $districts[$districtId],
+                $this->districtsRelationId => $districtId,
+                $this->citiesRelationId => $districts[$districtId],
                 'name' => $name,
                 'slug' => Str::slug($name),
                 'is_active' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
             ];
 
             if (count($neighborhoods) >= 100) {
