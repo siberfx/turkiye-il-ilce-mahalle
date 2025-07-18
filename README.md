@@ -2,58 +2,93 @@
 
 Bu paket, Türkiye'nin şehir, ilçe ve mahalle verilerini Laravel projelerine kolayca entegre etmenizi sağlar. SQL dump dosyaları, dinamik tablo isimleri, seeder, migration ve Eloquent modelleri ile birlikte gelir.
 
+## Özellikler
+
+- Türkiye'nin tüm şehir, ilçe ve mahalle verileri
+- Esnek yapılandırma seçenekleri
+- Performans için optimize edilmiş veri yükleme
+- Kolay entegrasyon için hazır migration dosyaları
+- Seçici yayınlama özelliği ile ihtiyacınız olan dosyaları yükleyin
+- Laravel 11.x ve üzeri sürümlerle uyumlu
+
 ## Kurulum
 
-1. **Paketin Kurulumu**
+1. **Paketi Composer ile yükleyin**:
 
-Composer ile yükleyin:
 ```bash
 composer require siberfx/turkiye-address
 ```
 
-2. **Servis Sağlayıcısını Kaydedin** (Laravel 10 ve öncesi için gerekebilir)
+2. **Servis Sağlayıcısını Kaydedin** (Laravel 10 ve öncesi için gerekebilir):
+
 ```php
 'providers' => [
     Siberfx\TurkiyePackage\TurkiyeAdreslerServiceProvider::class,
 ],
 ```
 
-3. **Config ve Seeder/SQL Dump Dosyalarını Yayınlayın**
+## Kullanım
 
-Aşağıdaki yeni toplu komut ile hem config hem de SQL dump dosyalarını kolayca yayınlayabilirsiniz:
+### Tüm Varlıkları Yayınlama
+
+Tüm yapılandırma, migration ve seeder dosyalarını tek komutla yayınlayın:
+
 ```bash
-php artisan turkiye:publish-assets
+php artisan turkiye:publish
 ```
 
-Alternatif olarak klasik vendor:publish komutlarını da kullanabilirsiniz:
+### Seçerek Yayınlama
+
+Sadece ihtiyacınız olan dosyaları seçerek yayınlayabilirsiniz:
+
 ```bash
-php artisan vendor:publish --provider="Siberfx\\TurkiyePackage\\TurkiyeAdreslerServiceProvider" --tag=config
-php artisan vendor:publish --provider="Siberfx\\TurkiyePackage\\TurkiyeAdreslerServiceProvider" --tag=seeders
+# Sadece config dosyasını yayınla
+php artisan turkiye:publish --config
+
+# Sadece migration dosyalarını yayınla
+php artisan turkiye:publish --migrations
+
+# Sadece seeder ve SQL dosyalarını yayınla
+php artisan turkiye:publish --seeders
+
+# Mevcut dosyaların üzerine yaz
+php artisan turkiye:publish --force
 ```
 
-4. **Migration Dosyalarını Çalıştırın**
+### Migration'ları Çalıştırma
+
+Yayınlanan migration dosyalarını çalıştırın:
+
 ```bash
-php artisan turkiye:migrate
+php artisan migrate
 ```
 
-5. **Seeder'ı Çalıştırın**
+### Verileri Yükleme
+
 Seeder'ı `DatabaseSeeder.php` dosyanıza ekleyin:
+
 ```php
 $this->call(\Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder::class);
 ```
-Ardından:
+
+Ardından verileri yükleyin:
+
 ```bash
 php artisan db:seed
 ```
 
-## Yapılandırma (Config)
+## Yapılandırma
 
-`config/turkiye-package.php` dosyasından tablo isimlerini değiştirebilirsiniz:
+`config/turkiye-package.php` dosyasından tablo isimlerini ve model sınıflarını özelleştirebilirsiniz:
+
 ```php
 return [
     'cities_table' => env('TURKIYE_CITIES_TABLE', 'cities'),
     'districts_table' => env('TURKIYE_DISTRICTS_TABLE', 'districts'),
     'neighborhoods_table' => env('TURKIYE_NEIGHBORHOODS_TABLE', 'neighborhoods'),
+    'city_model' => 'Siberfx\\TurkiyePackage\\Models\\City',
+    'district_model' => 'Siberfx\\TurkiyePackage\\Models\\District',
+    'neighborhood_model' => 'Siberfx\\TurkiyePackage\\Models\\Neighborhood',
 ];
 ```
 
@@ -64,26 +99,44 @@ use Siberfx\TurkiyePackage\Models\City;
 use Siberfx\TurkiyePackage\Models\District;
 use Siberfx\TurkiyePackage\Models\Neighborhood;
 
+// Tüm şehirleri getir
 $iller = City::all();
+
+// Belirli bir ile ait ilçeleri getir
 $ilceler = District::where('city_id', 1)->get();
+
+// Belirli bir ilçeye ait mahalleleri getir
 $mahalleler = Neighborhood::where('district_id', 10)->get();
 ```
 
-## Konsol Komutu
+## İlişkiler
 
-Migration dosyalarını çalıştırmak için:
-```bash
-php artisan turkiye:migrate
+Modeller arasında tanımlanmış ilişkileri kullanabilirsiniz:
+
+```php
+// Bir şehrin tüm ilçeleri
+$il = City::find(1);
+$ilceler = $il->districts;
+
+// Bir ilçenin tüm mahalleleri
+$ilce = District::find(10);
+$mahalleler = $ilce->neighborhoods;
 ```
 
-## Notlar
-- Seeder büyük veri için optimize edilmiştir (timeout/memory limit ayarlı, tekrar çalıştırılabilir).
-- `INSERT IGNORE` ile kayıtlar tekrar eklenmez.
-- SQL dump dosyaları `src/database/sql-dumps` klasöründedir.
+## Sürüm Geçmişi
 
-## Katkı ve Lisans
-MIT Lisansı ile dağıtılmaktadır. Katkılarınızı bekleriz!
+Detaylı değişiklikler için [CHANGELOG.md](CHANGELOG.md) dosyasına bakınız.
 
----
+## Katkıda Bulunma
 
-**İletişim:** info@siberfx.com
+Katkılarınızı bekliyoruz! Lütfen önce bir konu açarak yapmak istediğiniz değişikliği tartışın.
+
+## Lisans
+
+Bu paket [MIT lisansı](LICENSE) altında lisanslanmıştır.
+
+## İletişim
+
+SiberFX - [info@siberfx.com](mailto:info@siberfx.com)
+
+Proje Linki: [https://github.com/siberfx/turkiye-address](https://github.com/siberfx/turkiye-address)

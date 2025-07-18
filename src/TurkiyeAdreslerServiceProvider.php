@@ -3,6 +3,7 @@
 namespace Siberfx\TurkiyePackage;
 
 use Illuminate\Support\ServiceProvider;
+use Siberfx\TurkiyePackage\Console\Commands\PublishTurkiyeAssets;
 
 class TurkiyeAdreslerServiceProvider extends ServiceProvider
 {
@@ -10,27 +11,26 @@ class TurkiyeAdreslerServiceProvider extends ServiceProvider
     {
         // Publish config
         $this->publishes([
-            __DIR__.'/../config/turkiye-package.php' => config_path('turkiye-package.php'),
+            __DIR__ . '/../config/turkiye-package.php' => config_path('turkiye-package.php'),
         ], 'config');
 
         // Publish seeders and SQL dumps (optional)
         $this->publishes([
-            __DIR__.'/database/seeders/TurkiyeSeeder.php' => database_path('seeders/TurkiyeSeeder.php'),
-            __DIR__.'/database/sql-dumps' => database_path('sql-dumps'),
+            __DIR__ . '/database/seeders/TurkiyeSeeder.php' => database_path('seeders/TurkiyeSeeder.php'),
+            __DIR__ . '/database/sql-dumps' => database_path('sql-dumps'),
         ], 'seeders');
     }
 
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__.'/../config/turkiye-package.php', 'turkiye-adresler'
+            __DIR__ . '/../config/turkiye-package.php', 'turkiye-adresler'
         );
 
         // Register console commands
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \Siberfx\TurkiyePackage\Console\Commands\RunTurkiyeMigrations::class,
-                \Siberfx\TurkiyePackage\Console\Commands\PublishTurkiyeAssets::class,
+                PublishTurkiyeAssets::class,
             ]);
         }
     }

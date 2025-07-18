@@ -3,12 +3,14 @@
 namespace Siberfx\TurkiyePackage\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class City extends Model
 {
     protected $table;
     public $timestamps = false;
-    protected $fillable = ['id', 'name'];
+    protected $guarded = ['id'];
 
     public function __construct(array $attributes = [])
     {
@@ -16,8 +18,10 @@ class City extends Model
         $this->table = config('turkiye-adresler.cities_table', 'cities');
     }
 
-    public function districts()
+    public function districts(): HasMany
     {
-        return $this->hasMany(District::class, 'city_id');
+        $relationName = Str::singular(config('turkiye-adresler.districts_table')) . '_id';
+
+        return $this->hasMany(District::class, $relationName);
     }
 }
