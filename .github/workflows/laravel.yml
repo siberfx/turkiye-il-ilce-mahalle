@@ -11,14 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        laravel: [ "11.40", "12.0" ]
+        laravel: [ "12.0" ]
         php: [ "8.2", "8.3" ]
-        include:
-          - laravel: "11"
-            stability: ""
-          - laravel: "12"
-            stability: "dev"
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -32,7 +26,7 @@ jobs:
 
     - name: Create Laravel app
       run: |
-        composer create-project laravel/laravel:^${{ matrix.laravel }} test-app ${{ matrix.stability }}
+        composer create-project laravel/laravel:^${{ matrix.laravel }} test-app
       env:
         COMPOSER_MEMORY_LIMIT: -1
 
