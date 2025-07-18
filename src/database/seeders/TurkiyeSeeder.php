@@ -21,7 +21,7 @@ class TurkiyeSeeder extends Seeder
         // Set model class names from config or use package defaults
         $this->cityModel = $this->config['city_model'] ?? 'Siberfx\\TurkiyePackage\\Models\\City';
         $this->districtModel = $this->config['district_model'] ?? 'Siberfx\\TurkiyePackage\\Models\\District';
-        $this->neighborhoodModel = $this->config['neighborhood_model'] ?? 'Siberfox\\TurkiyePackage\\Models\\Neighborhood';
+        $this->neighborhoodModel = $this->config['neighborhood_model'] ?? 'Siberfx\\TurkiyePackage\\Models\\Neighborhood';
     }
 
     /**
@@ -138,7 +138,7 @@ class TurkiyeSeeder extends Seeder
 
             $districts[] = [
                 'id' => $id,
-                'city_id' => $cityId,
+                Str::singular($table).'_id' => $cityId,
                 'name' => $name,
                 'slug' => Str::slug($name),
                 'is_active' => true,
@@ -185,8 +185,8 @@ class TurkiyeSeeder extends Seeder
 
             $neighborhoods[] = [
                 'id' => $id,
-                'district_id' => $districtId,
-                'city_id' => $districts[$districtId],
+                Str::singular($districtsTable).'_id' => $districtId,
+                Str::singular($this->config['cities_table']).'_id' => $districts[$districtId],
                 'name' => $name,
                 'slug' => Str::slug($name),
                 'is_active' => true,
