@@ -39,13 +39,20 @@ jobs:
       env:
         COMPOSER_MEMORY_LIMIT: -1
 
-    - name: Publish config and SQL dumps
+    - name: Publish package assets
       run: |
         cd test-app
-        php artisan turkiye:publish-assets --force
+        php artisan turkiye:publish --migrations --config --seeders --force
 
-    - name: Install package dependencies
-      run: composer install --prefer-dist --no-interaction --no-progress
+    - name: Run migrations
+      run: |
+        cd test-app
+        php artisan migrate --force
+
+    - name: Run seeders
+      run: |
+        cd test-app
+        php artisan db:seed --class=Database\\Seeders\\DatabaseSeeder
 
     - name: Run package tests
       run: composer test
