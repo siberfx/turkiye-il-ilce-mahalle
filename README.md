@@ -102,10 +102,10 @@ use Siberfx\TurkiyePackage\Models\Neighborhood;
 // Tüm şehirleri getir
 $iller = City::all();
 
-// Belirli bir ile ait ilçeleri getir
+// Belirli bir ile ait ilçeleri getir (city_id farklı tablo isimleri kullanılıyorsa değiştirilmnelidir )
 $ilceler = District::where('city_id', 1)->get();
 
-// Belirli bir ilçeye ait mahalleleri getir
+// Belirli bir ilçeye ait mahalleleri getir (district_id farklı tablo isimleri kullanılıyorsa değiştirilmnelidir )
 $mahalleler = Neighborhood::where('district_id', 10)->get();
 ```
 
