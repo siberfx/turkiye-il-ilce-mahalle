@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        laravel: [ "11.0", "12.0" ]
+        laravel: [ "11.40", "12.0" ]
         php: [ "8.2", "8.3" ]
         include:
           - laravel: "11"
-            stability: "stable"
+            stability: ""
           - laravel: "12"
-            stability: "stable"
+            stability: "dev"
 
     steps:
     - name: Checkout code
