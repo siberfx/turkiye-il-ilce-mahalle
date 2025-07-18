@@ -30,7 +30,17 @@ class ServiceProviderTest extends TestCase
 
     protected function defineDatabaseMigrations()
     {
-        // Create test tables for our models
+        // Set the configuration to match our test schema
+        config([
+            'turkiye-package.cities_table' => 'cities',
+            'turkiye-package.districts_table' => 'districts',
+            'turkiye-package.neighborhoods_table' => 'neighborhoods',
+            'turkiye-package.cities_relation_id' => 'city_id',
+            'turkiye-package.districts_relation_id' => 'district_id',
+            'turkiye-package.neighborhoods_relation_id' => 'neighborhood_id',
+        ]);
+
+        // Create test tables for our models with the expected schema
         Schema::create('cities', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -38,13 +48,15 @@ class ServiceProviderTest extends TestCase
 
         Schema::create('districts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('city_id')->constrained();
+            $table->foreignId(config('turkiye-package.cities_relation_id', 'city_id'))
+                  ->constrained('cities');
             $table->string('name');
         });
 
         Schema::create('neighborhoods', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('district_id')->constrained();
+            $table->foreignId(config('turkiye-package.districts_relation_id', 'district_id'))
+                  ->constrained('districts');
             $table->string('name');
         });
     }
@@ -75,18 +87,25 @@ class ServiceProviderTest extends TestCase
         $this->assertInstanceOf(Neighborhood::class, $neighborhood);
         
         // Verify table names are correctly set from config
-        $this->assertEquals(config('turkiye-adresler.cities_table', 'cities'), $city->getTable());
-        $this->assertEquals(config('turkiye-adresler.districts_table', 'districts'), $district->getTable());
-        $this->assertEquals(config('turkiye-adresler.neighborhoods_table', 'neighborhoods'), $neighborhood->getTable());
+        $this->assertEquals(config('turkiye-package.cities_table', 'cities'), $city->getTable());
+        $this->assertEquals(config('turkiye-package.districts_table', 'districts'), $district->getTable());
+        $this->assertEquals(config('turkiye-package.neighborhoods_table', 'neighborhoods'), $neighborhood->getTable());
     }
     
     public function test_model_relationships()
     {
-        // Create test data
+        // Get relationship column names from config
+        $cityIdColumn = config('turkiye-package.cities_relation_id', 'city_id');
+        $districtIdColumn = config('turkiye-package.districts_relation_id', 'district_id');
+        
+        // Create test data using dynamic column names
         $city = City::create(['name' => 'Test City']);
-        $district = District::create(['city_id' => $city->id, 'name' => 'Test District']);
+        $district = District::create([
+            $cityIdColumn => $city->id, 
+            'name' => 'Test District'
+        ]);
         $neighborhood = Neighborhood::create([
-            'district_id' => $district->id, 
+            $districtIdColumn => $district->id, 
             'name' => 'Test Neighborhood'
         ]);
         
@@ -95,6 +114,15 @@ class ServiceProviderTest extends TestCase
         $this->assertInstanceOf(City::class, $district->city);
         $this->assertInstanceOf(Neighborhood::class, $district->neighborhoods->first());
         $this->assertInstanceOf(District::class, $neighborhood->district);
+        
+        // Refresh relationships
+        $city->load('districts');
+        $district->load(['city', 'neighborhoods']);
+        $neighborhood->load('district');
+        
+        // Assert relationship integrity using dynamic column names
+        $this->assertEquals($city->id, $district->{$cityIdColumn});
+        $this->assertEquals($district->id, $neighborhood->{$districtIdColumn});
         
         // Test data values
         $this->assertEquals('Test City', $city->name);

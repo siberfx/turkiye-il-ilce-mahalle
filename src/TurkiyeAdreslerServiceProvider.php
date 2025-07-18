@@ -4,6 +4,7 @@ namespace Siberfx\TurkiyePackage;
 
 use Illuminate\Support\ServiceProvider;
 use Siberfx\TurkiyePackage\Console\Commands\PublishTurkiyeAssets;
+use Siberfx\TurkiyePackage\Console\Commands\MigrateTurkiyeCommand;
 
 class TurkiyeAdreslerServiceProvider extends ServiceProvider
 {
@@ -31,6 +32,7 @@ class TurkiyeAdreslerServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 PublishTurkiyeAssets::class,
+                MigrateTurkiyeCommand::class,
             ]);
         }
     }

@@ -27,7 +27,8 @@
     },
     "require-dev": {
         "orchestra/testbench": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
-        "phpunit/phpunit": "^10.0"
+        "phpunit/phpunit": "^10.0",
+        "nunomaduro/collision": "^8.0"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,

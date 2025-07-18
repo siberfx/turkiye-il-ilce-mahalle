@@ -5,7 +5,7 @@ namespace Siberfx\TurkiyePackage\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Config;
 
 class District extends Model
 {
@@ -16,20 +16,22 @@ class District extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->table = config('turkiye-adresler.districts_table', 'districts');
+        $this->table = config('turkiye-package.districts_table', 'districts');
     }
 
     public function city(): BelongsTo
     {
-        $relationName = Str::singular(config('turkiye-adresler.cities_table')) . '_id';
-
-        return $this->belongsTo(City::class, $relationName);
+        return $this->belongsTo(
+            City::class, 
+            config('turkiye-package.cities_relation_id', 'city_id')
+        );
     }
 
     public function neighborhoods(): HasMany
     {
-        $relationName = Str::singular(config('turkiye-adresler.districts_table')) . '_id';
-
-        return $this->hasMany(Neighborhood::class, $relationName);
+        return $this->hasMany(
+            Neighborhood::class, 
+            config('turkiye-package.districts_relation_id', 'district_id')
+        );
     }
 }

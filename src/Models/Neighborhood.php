@@ -4,7 +4,6 @@ namespace Siberfx\TurkiyePackage\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 
 class Neighborhood extends Model
 {
@@ -15,13 +14,14 @@ class Neighborhood extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->table = config('turkiye-adresler.neighborhoods_table', 'neighborhoods');
+        $this->table = config('turkiye-package.neighborhoods_table', 'neighborhoods');
     }
 
     public function district(): BelongsTo
     {
-        $relationName = Str::singular(config('turkiye-adresler.districts_table')) . '_id';
-
-        return $this->belongsTo(District::class, $relationName);
+        return $this->belongsTo(
+            District::class, 
+            config('turkiye-package.districts_relation_id', 'district_id')
+        );
     }
 }
