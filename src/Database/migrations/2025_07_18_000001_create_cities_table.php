@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        $config = config('turkiye-adresler');
+        $config = config('turkiye-package');
         $tableName = $config['cities_table'] ?? 'cities';
 
         Schema::create($tableName, function (Blueprint $table) {
@@ -24,7 +24,7 @@ return new class extends Migration
 
     public function down()
     {
-        $config = config('turkiye-adresler');
+        $config = config('turkiye-package');
         $tableName = $config['cities_table'] ?? 'cities';
 
         Schema::dropIfExists($tableName);

@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 return new class extends Migration {
     public function up()
     {
-        $config = config('turkiye-adresler');
+        $config = config('turkiye-package');
         $tableName = $config['districts_table'] ?? 'districts';
         $citiesTable = $config['cities_table'] ?? 'cities';
 
@@ -36,7 +36,7 @@ return new class extends Migration {
 
     public function down()
     {
-        $config = config('turkiye-adresler');
+        $config = config('turkiye-package');
         $tableName = $config['districts_table'] ?? 'districts';
 
         Schema::dropIfExists($tableName);

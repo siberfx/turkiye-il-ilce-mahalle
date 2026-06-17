@@ -22,12 +22,12 @@ class {{ class }} extends Seeder
 
     public function __construct()
     {
-        $this->config = config('turkiye-adresler');
+        $this->config = config('turkiye-package', []);
 
         // Set model class names from config or use package defaults
         $this->cityModel = $this->config['city_model'] ?? 'Siberfx\\TurkiyePackage\\Models\\City';
         $this->districtModel = $this->config['district_model'] ?? 'Siberfx\\TurkiyePackage\\Models\\District';
-        $this->neighborhoodModel = $this->config['neighborhood_model'] ?? 'Siberfox\\TurkiyePackage\\Models\\Neighborhood';
+        $this->neighborhoodModel = $this->config['neighborhood_model'] ?? 'Siberfx\\TurkiyePackage\\Models\\Neighborhood';
        
         $this->citiesTable = $this->config['cities_table'] ?? 'cities';
         $this->districtsTable = $this->config['districts_table'] ?? 'districts';
@@ -152,8 +152,8 @@ class {{ class }} extends Seeder
         $districtsTable = $this->districtsTable;
         $neighborhoodsSql = File::get(base_path('{{ neighborhoods_path }}'));
 
-        // Get all districts with their city_id
-        $districts = DB::table($districtsTable)->pluck('city_id', 'id');
+        // Get all districts with their city id
+        $districts = DB::table($districtsTable)->pluck($this->citiesRelationId, 'id');
 
         // Extract data from SQL - match format: ('1','1104','AHMET REMZİ YÜREĞİR MAHALLESİ')
         preg_match_all("/\('(\d+)'\s*,\s*'(\d+)'\s*,\s*'([^']+)'\s*\)/i", $neighborhoodsSql, $matches);

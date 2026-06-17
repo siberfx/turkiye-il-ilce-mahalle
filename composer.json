@@ -16,12 +16,19 @@
     "authors": [
         {
             "name": "Selim Görmüş",
-            "email": "info@siberfx.com"
+            "email": "info@siberfx.com",
+            "homepage": "https://siberfx.com",
+            "role": "Software Engineer"
         }
     ],
     "autoload": {
         "psr-4": {
             "Siberfx\\TurkiyePackage\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
         }
     },
     "extra": {
@@ -32,12 +39,12 @@
         }
     },
     "require": {
-        "php": "^8.3|^8.4",
-        "illuminate/support": "^11.0|^12.0|^13.0"
+        "php": "^8.4",
+        "illuminate/support": "^12.0|^13.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^11.0 || ^12.0 || ^13.0",
-        "phpunit/phpunit": "^10.0"
+        "orchestra/testbench": "^10.0 || ^11.0",
+        "phpunit/phpunit": "^11.5 || ^12.0"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,

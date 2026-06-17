@@ -1,18 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Siberfx\TurkiyePackage\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
 
 class MigrateTurkiyeCommand extends Command
 {
-    protected $signature = 'turkiye:migrate {--fresh : Drop all tables and re-run all migrations} 
+    protected $signature = 'turkiye:migrate {--fresh : Drop all tables and re-run all migrations}
                                          {--seed : Seed the database after migration}';
-    
+
     protected $description = 'Run the database migrations for the Türkiye package';
 
-    public function handle()
+    public function handle(): int
     {
         $options = ['--path' => 'database/migrations'];
         
@@ -27,7 +28,7 @@ class MigrateTurkiyeCommand extends Command
         }
 
         $this->info('Türkiye package migrations completed successfully.');
-        
-        return 0;
+
+        return self::SUCCESS;
     }
 }

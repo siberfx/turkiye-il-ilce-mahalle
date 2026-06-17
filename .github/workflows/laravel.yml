@@ -10,55 +10,38 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        laravel: [ "12.0", "13.0" ]
-        php: [ "8.3", "8.4" ]
+        php: [ "8.4" ]
+        laravel: [ "12", "13" ]
+        include:
+          - laravel: "12"
+            testbench: "10"
+          - laravel: "13"
+            testbench: "11"
+
+    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: ${{ matrix.php }}
-        extensions: mbstring, intl, bcmath, pdo, sqlite, fileinfo
-        coverage: none
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, bcmath, pdo, sqlite, pdo_sqlite, fileinfo
+          coverage: none
 
-    - name: Create Laravel app
-      run: |
-        composer create-project laravel/laravel:^${{ matrix.laravel }} test-app
-      env:
-        COMPOSER_MEMORY_LIMIT: -1
+      - name: Install dependencies
+        run: |
+          composer require \
+            "illuminate/support:^${{ matrix.laravel }}.0" \
+            "orchestra/testbench:^${{ matrix.testbench }}.0" \
+            --no-interaction --no-update
+          composer update --prefer-dist --prefer-stable --no-interaction
+        env:
+          COMPOSER_MEMORY_LIMIT: -1
 
-    - name: Require package
-      run: |
-        cd test-app
-        composer config repositories.local '{"type": "path", "url": "../", "options": {"symlink": true}}'
-        composer require siberfx/turkiye-address:dev-main --dev
-      env:
-        COMPOSER_MEMORY_LIMIT: -1
-
-    - name: Install test dependencies
-      run: |
-        cd test-app
-        composer require --dev phpunit/phpunit ^10.0 --with-all-dependencies
-
-    - name: Publish package assets
-      run: |
-        cd test-app
-        php artisan turkiye:publish --migrations --seeders --force
-
-    - name: Run migrations
-      run: |
-        cd test-app
-        php artisan migrate --force
-
-    - name: Run seeders
-      run: |
-        cd test-app
-        php artisan db:seed --class=Database\\Seeders\\DatabaseSeeder
-
-    - name: Run package tests
-      run: |
-        cd test-app
-        ./vendor/bin/phpunit --testdox
+      - name: Run tests
+        run: vendor/bin/phpunit --testdox

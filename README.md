@@ -9,23 +9,23 @@ Bu paket, Türkiye'nin şehir, ilçe ve mahalle verilerini Laravel projelerine k
 - Performans için optimize edilmiş veri yükleme
 - Kolay entegrasyon için hazır migration dosyaları
 - Seçici yayınlama özelliği ile ihtiyacınız olan dosyaları yükleyin
-- Laravel 11.x ve üzeri sürümlerle uyumlu
+- Laravel 12 ve 13 ile uyumlu (PHP 8.4)
+
+## Gereksinimler
+
+- PHP 8.4+
+- Laravel 12 veya 13
 
 ## Kurulum
 
 1. **Paketi Composer ile yükleyin**:
 
 ```bash
-composer require siberfx/turkiye-address
+composer require siberfx/turkiye-adresler-json
 ```
 
-2. **Servis Sağlayıcısını Kaydedin** (Laravel 10 ve öncesi için gerekebilir):
-
-```php
-'providers' => [
-    Siberfx\TurkiyePackage\TurkiyeAdreslerServiceProvider::class,
-],
-```
+Servis sağlayıcısı paket bulma (package discovery) ile otomatik olarak kaydedilir;
+elle kayıt gerekmez.
 
 ## Kullanım
 

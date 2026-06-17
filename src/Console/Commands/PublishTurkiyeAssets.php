@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Siberfx\TurkiyePackage\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 
 class PublishTurkiyeAssets extends Command
 {
@@ -15,7 +16,7 @@ class PublishTurkiyeAssets extends Command
                             
     protected $description = 'Publish the Türkiye package assets (config, migrations, seeders)';
 
-    public function handle()
+    public function handle(): int
     {
         $options = [
             '--provider' => 'Siberfx\\TurkiyePackage\\TurkiyeAdreslerServiceProvider',
@@ -41,7 +42,8 @@ class PublishTurkiyeAssets extends Command
 
         if (empty($tags)) {
             $this->error('No publishable resources selected!');
-            return 1;
+
+            return self::FAILURE;
         }
 
         $options['--tag'] = $tags;
@@ -67,7 +69,7 @@ class PublishTurkiyeAssets extends Command
             'Successfully published %s!',
             implode(', ', $published)
         ));
-        
-        return 0;
+
+        return self::SUCCESS;
     }
 }

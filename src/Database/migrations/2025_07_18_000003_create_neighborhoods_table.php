@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        $config = config('turkiye-adresler');
+        $config = config('turkiye-package');
         $tableName = $config['neighborhoods_table'] ?? 'neighborhoods';
         $districtsTable = $config['districts_table'] ?? 'districts';
         $citiesTable = $config['cities_table'] ?? 'cities';
@@ -46,7 +46,7 @@ return new class extends Migration
 
     public function down()
     {
-        $config = config('turkiye-adresler');
+        $config = config('turkiye-package');
         $tableName = $config['neighborhoods_table'] ?? 'neighborhoods';
 
         Schema::dropIfExists($tableName);
