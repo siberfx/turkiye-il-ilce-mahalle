@@ -139,4 +139,4 @@ Bu paket [MIT lisansı](LICENSE) altında lisanslanmıştır.
 
 SiberFX - [info@siberfx.com](mailto:info@siberfx.com)
 
-Proje Linki: [https://github.com/siberfx/turkiye-address](https://github.com/siberfx/turkiye-address)
+Proje Linki: [https://github.com/siberfx/turkiye-il-ilce-mahalle](https://github.com/siberfx/turkiye-il-ilce-mahalle)
