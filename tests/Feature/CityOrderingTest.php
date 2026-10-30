@@ -71,16 +71,19 @@ class CityOrderingTest extends TestCase
 
     public function test_migration_orders_cities_of_an_existing_installation(): void
     {
-        // Simulate an installation from before sort_order existed.
-        $this->artisan('migrate:rollback', ['--step' => 1])->assertExitCode(0);
+        // Simulate an installation from before sort_order existed, without touching the
+        // migration batches (Testbench rolls them back after the test on persistent databases).
+        $migration = require __DIR__ . '/../../src/Database/migrations/2026_10_30_000005_add_sort_order_to_cities_table.php';
+        $migration->down();
         $this->assertFalse(Schema::hasColumn('cities', 'sort_order'));
+
         DB::table('cities')->insert([
             ['id' => 1, 'name' => 'ADANA', 'slug' => 'adana', 'is_active' => true],
             ['id' => 35, 'name' => 'İZMİR', 'slug' => 'izmir', 'is_active' => true],
             ['id' => 16, 'name' => 'BURSA', 'slug' => 'bursa', 'is_active' => true],
         ]);
 
-        $this->artisan('migrate')->assertExitCode(0);
+        $migration->up();
 
         $this->assertSame([35, 1, 16], City::ordered()->pluck('id')->all());
     }
