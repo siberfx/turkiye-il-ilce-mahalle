@@ -41,7 +41,7 @@ class SeederTest extends TestCase
         // Türkiye has 81 provinces and 973 districts.
         $this->assertSame(81, DB::table('cities')->count());
         $this->assertSame(973, DB::table('districts')->count());
-        $this->assertSame(74398, DB::table('neighborhoods')->count());
+        $this->assertSame(75422, DB::table('neighborhoods')->count());
 
         // Every district points at an existing city.
         $orphanDistricts = DB::table('districts')
@@ -65,6 +65,22 @@ class SeederTest extends TestCase
             "BOĞAZİÇİ KÖYÜ, TAN'IN KOMLARI MEVKİİ",
             DB::table('neighborhoods')->where('id', 29235)->value('name')
         );
+    }
+
+    public function test_seeder_imports_records_synced_from_official_list(): void
+    {
+        (new TurkiyeSeeder())->setContainer($this->app)->run();
+
+        // Added from the e-İçişleri mahalle/köy lists; ids start at 1,000,000.
+        $this->assertSame(1024, DB::table('neighborhoods')->where('id', '>=', 1_000_000)->count());
+
+        // Gölbaşı (Adıyaman), Nurdağı (Gaziantep), Derecik (Hakkari)
+        $this->assertSame('6 ŞUBAT MAHALLESİ', DB::table('neighborhoods')->where('id', 1000312)->value('name'));
+        $this->assertSame(1354, DB::table('neighborhoods')->where('id', 1000312)->value('district_id'));
+        $this->assertSame(2, DB::table('neighborhoods')->where('id', 1000312)->value('city_id'));
+        $this->assertSame('6 ŞUBAT MAHALLESİ', DB::table('neighborhoods')->where('id', 1000906)->value('name'));
+        $this->assertSame('ULAŞAN KÖYÜ', DB::table('neighborhoods')->where('id', 1001022)->value('name'));
+        $this->assertSame(30, DB::table('neighborhoods')->where('id', 1001022)->value('city_id'));
     }
 
     public function test_seeder_prefers_published_dumps(): void

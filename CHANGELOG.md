@@ -2,6 +2,17 @@
 
 All notable changes to this package are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- 1,024 mahalle and köy records synced from the Ministry of Interior's official
+  inventory ([e-icisleri.gov.tr](https://www.e-icisleri.gov.tr/Anasayfa/MulkiIdariBolumleri.aspx)):
+  758 mahalle (107 of them inside a belde) and 266 köy. Neighborhoods: 74,398 → 75,422.
+  Every official mahalle (32,327) and köy (18,210) is now present
+- New records use IDs from 1,000,000 upwards; no existing ID or foreign key was changed
+- README: "Source and official reference" section
+
 ## [2.0.0] - 2026-10-30
 
 ### Changed (Breaking)

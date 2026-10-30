@@ -1,6 +1,6 @@
 # Türkiye Addresses for Laravel
 
-A Laravel package that ships the complete administrative address hierarchy of Türkiye — **81 cities (il)**, **973 districts (ilçe)** and **74,398 neighborhoods (mahalle, köy, mevkii, mezra)** — together with migrations, a fast seeder and Eloquent models with relationships.
+A Laravel package that ships the complete administrative address hierarchy of Türkiye — **81 cities (il)**, **973 districts (ilçe)** and **75,422 neighborhoods (mahalle, köy, mevkii, mezra)** — together with migrations, a fast seeder and Eloquent models with relationships.
 
 - Works out of the box: migrations auto-load and the seeder reads the bundled SQL dumps, so nothing has to be published.
 - Database-agnostic seeder (MySQL / MariaDB, PostgreSQL, SQLite), chunked inserts inside a single transaction.
@@ -493,9 +493,25 @@ php artisan db:seed --class="Database\Seeders\TurkiyeSeeder"
 | ------------- | ------ | --------------------------------------------------------------------- |
 | Cities        | 81     | IDs are the official plate codes                                      |
 | Districts     | 973    | Every province's district count matches the official administrative list |
-| Neighborhoods | 74,398 | ~32k `MAHALLESİ`, ~23k `MEVKİİ`, ~12k `KÖYÜ`, ~5k `MEZRASI`, ~1.4k `EVLERİ` |
+| Neighborhoods | 75,422 | ~33k `MAHALLESİ`, ~23k `MEVKİİ`, ~12.6k `KÖYÜ`, ~5k `MEZRASI`, ~1.4k `EVLERİ` |
 
 The neighborhood level follows the postal (PTT) address register, so besides mahalle it also contains villages (köy), localities (mevkii) and hamlets (mezra). Street (sokak) level data is not included.
+
+### Source and official reference
+
+Mahalle and köy records are checked against the official inventory of administrative divisions published by the Ministry of Interior (İçişleri Bakanlığı, İller İdaresi Genel Müdürlüğü):
+
+**[Türkiye Mülki İdare Bölümleri Envanteri — e-icisleri.gov.tr](https://www.e-icisleri.gov.tr/Anasayfa/MulkiIdariBolumleri.aspx)**
+
+| Official list (October 2026) | Official count | Present in this package |
+| ---------------------------- | -------------- | ----------------------- |
+| İl (province)                | 81             | 81                      |
+| Mahalle (neighborhood)       | 32,327         | all                     |
+| Köy (village)                | 18,210         | all                     |
+
+- Records that were missing from the original dataset were added with IDs starting at **1,000,000**, so existing IDs — and any foreign keys pointing at them in your application — never change.
+- About 940 official names differ from the dataset by a single letter (e.g. `KEKLİKÇE` / `KEKLİKÇİ`); these are the same places and were kept under their existing IDs and spelling.
+- Records are never deleted or renumbered by a data update. If a place moves to another district, the new location is added and the old row is kept.
 
 Found a missing or outdated record? Please open an [issue](https://github.com/siberfx/turkiye-il-ilce-mahalle/issues) with the official source.
 
