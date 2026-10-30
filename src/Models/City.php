@@ -13,6 +13,7 @@ use Siberfx\TurkiyePackage\Enums\NeighborhoodType;
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property int $sort_order
  * @property bool $is_active
  */
 class City extends Model
@@ -30,6 +31,7 @@ class City extends Model
     {
         return [
             'is_active' => 'boolean',
+            'sort_order' => 'integer',
         ];
     }
 
@@ -60,5 +62,14 @@ class City extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /**
+     * Featured cities first (config featured_cities, e.g. İstanbul, Ankara, İzmir),
+     * then the rest in Turkish alphabetical order.
+     */
+    public function scopeOrdered(Builder $query): void
+    {
+        $query->orderBy('sort_order')->orderBy('id');
     }
 }

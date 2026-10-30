@@ -2,6 +2,35 @@
 
 All notable changes to this package are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- `cities.sort_order` column (new additive migration `2026_10_30_000005_add_sort_order_to_cities_table`)
+  and `City::ordered()`: the configured big cities first, then every other city in Turkish
+  alphabetical order (independent of the database collation)
+- `featured_cities` config option / `TURKIYE_FEATURED_CITIES` env (plate codes); default
+  İstanbul (34), Ankara (6), İzmir (35), the three most populous provinces
+- `php artisan turkiye:sort-cities [codes...]` to recalculate the order; the seeder and the
+  migration apply it automatically
+- `src/Database/sql-dumps/inactive.json`: records the seeder keeps but marks `is_active = false`
+  (28 rows: places renamed or moved to another district in the official inventory — e.g. Şişli
+  `MERKEZ` → `ŞİŞLİ MERKEZ`, Balıbıdık köyü Yapraklı → Çankırı Merkez — and the bağlı of moved köys)
+- Tests: `CityOrderingTest`, `CityOrderTest`, official spelling / inactive records (47 tests)
+
+### Changed
+
+- Names now use the official spelling: 2,065 records that differed by a single letter were
+  renamed in place (590 mahalle, 335 köy, 1,140 bağlı; e.g. `KEKLİKÇİ` → `KEKLİKÇE`,
+  `GÖNAN KÖYÜ` → `GÖNEN KÖYÜ`). IDs are unchanged; bağlı of a renamed köy are renamed with it and
+  stay linked. Their `slug` changes accordingly
+- Re-seeding deactivates the rows listed in `inactive.json` on existing installations too
+
+### Fixed
+
+- 10 mahalles added in 2.0.1 carried their own district as a fake belde prefix
+  (e.g. `DÜZİÇİ BELDESİ, HACILAR MAHALLESİ` → `HACILAR MAHALLESİ`)
+
 ## [2.2.1] - 2026-10-30
 
 ### Fixed

@@ -7,6 +7,7 @@ namespace Siberfx\TurkiyePackage;
 use Illuminate\Support\ServiceProvider;
 use Siberfx\TurkiyePackage\Console\Commands\MigrateTurkiyeCommand;
 use Siberfx\TurkiyePackage\Console\Commands\PublishTurkiyeAssets;
+use Siberfx\TurkiyePackage\Console\Commands\SortCitiesCommand;
 
 class TurkiyeAddressServiceProvider extends ServiceProvider
 {
@@ -42,6 +43,7 @@ class TurkiyeAddressServiceProvider extends ServiceProvider
         $this->commands([
             PublishTurkiyeAssets::class,
             MigrateTurkiyeCommand::class,
+            SortCitiesCommand::class,
         ]);
     }
 }
