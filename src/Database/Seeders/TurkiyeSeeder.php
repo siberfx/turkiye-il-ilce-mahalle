@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Siberfx\TurkiyePackage\Enums\NeighborhoodType;
+use Siberfx\TurkiyePackage\Support\CityOrder;
 
 class TurkiyeSeeder extends Seeder
 {
@@ -54,6 +55,8 @@ class TurkiyeSeeder extends Seeder
         });
 
         $this->syncSequences();
+
+        CityOrder::apply();
     }
 
     /**
@@ -200,12 +203,43 @@ class TurkiyeSeeder extends Seeder
             ];
         }
 
+        // Records renamed or moved to another district officially: kept for existing foreign keys, but inactive.
+        $inactive = $this->inactiveNeighborhoodIds();
+
+        foreach ($rows as &$row) {
+            $row['is_active'] = ! isset($inactive[$row['id']]);
+        }
+        unset($row);
+
         // Köy and mahalle before bağlı, so every parent_id points at an existing row.
         usort($rows, fn (array $a, array $b): int => ($a['parent_id'] !== null) <=> ($b['parent_id'] !== null));
 
         $this->upsertInChunks($this->neighborhoodsTable, $rows);
 
+        // Existing installations: deactivate them too (upserts never touch is_active).
+        if ($inactive !== []) {
+            DB::table($this->neighborhoodsTable)->whereIn('id', array_keys($inactive))->update(['is_active' => false]);
+        }
+
         $this->command?->info(count($rows) . ' neighborhoods imported.');
+    }
+
+    /**
+     * Ids listed in inactive.json, as an id => true map.
+     *
+     * @return array<int, true>
+     */
+    protected function inactiveNeighborhoodIds(): array
+    {
+        $path = $this->dumpPath('inactive.json');
+
+        if (! File::exists($path)) {
+            return [];
+        }
+
+        $ids = array_column(json_decode(File::get($path), true)['neighborhoods'] ?? [], 'id');
+
+        return array_fill_keys(array_map(intval(...), $ids), true);
     }
 
     /**

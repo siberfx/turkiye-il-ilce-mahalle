@@ -1,0 +1,173 @@
+{
+    "_comment": "Neighborhood ids the seeder marks is_active = false: places that were renamed or moved to another district in the official Ministry of Interior inventory. The rows are kept so existing foreign keys stay valid; the current record exists under a separate id.",
+    "neighborhoods": [
+        {
+            "id": 23690,
+            "name": "BALIBIDIK KÖYÜ",
+            "district": "ÇANKIRI / YAPRAKLI",
+            "reason": "moved to ÇANKIRI / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 40251,
+            "name": "MERKEZ MAHALLESİ",
+            "district": "İSTANBUL / BEYKOZ",
+            "reason": "renamed to BEYKOZ MERKEZ MAHALLESİ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 40365,
+            "name": "MERKEZ MAHALLESİ",
+            "district": "İSTANBUL / EYÜPSULTAN",
+            "reason": "renamed to EYÜP MERKEZ MAHALLESİ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 40706,
+            "name": "MERKEZ MAHALLESİ",
+            "district": "İSTANBUL / ŞİŞLİ",
+            "reason": "renamed to ŞİŞLİ MERKEZ MAHALLESİ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 41564,
+            "name": "9 EYLÜL MAHALLESİ",
+            "district": "İZMİR / MENEMEN",
+            "reason": "renamed to ULUKENT DOKUZ EYLÜL MAHALLESİ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 74218,
+            "name": "DOĞANCA KÖYÜ",
+            "district": "SİİRT / PERVARİ",
+            "reason": "moved to SİİRT / ERUH (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 74219,
+            "name": "DOĞANCA KÖYÜ, SIĞIRLI MEZRASI",
+            "district": "SİİRT / PERVARİ",
+            "reason": "moved to SİİRT / ERUH (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 74220,
+            "name": "ERKENT KÖYÜ, SIĞIRLI MEZRASI",
+            "district": "SİİRT / PERVARİ",
+            "reason": "moved to SİİRT / ERUH (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 75854,
+            "name": "ALTINYAYLA KÖYÜ, MERKEZ MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 75855,
+            "name": "ALTINYAYLA KÖYÜ, DİVLİOĞLU MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 75856,
+            "name": "ALTINYAYLA KÖYÜ, AĞUSTOSLU MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 75857,
+            "name": "ALTINYAYLA KÖYÜ, İMAMOĞLU MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 75858,
+            "name": "ALTINYAYLA KÖYÜ, SAĞIROĞLU MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 75859,
+            "name": "ALTINYAYLA KÖYÜ, KAÇAK MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 76052,
+            "name": "TEPEALTI KÖYÜ, KARAGÖL MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 76053,
+            "name": "TEPEALTI KÖYÜ, GÖLÜ  MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 76054,
+            "name": "TEPEALTI KÖYÜ, KEMER MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 76055,
+            "name": "TEPEALTI KÖYÜ, MERKEZ MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 76056,
+            "name": "TEPEALTI KÖYÜ, EYNEDÜL MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 76060,
+            "name": "TÜRKMEN KÖYÜ, ŞERBETLİ MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 76061,
+            "name": "TÜRKMEN KÖYÜ, MERKEZ MEVKİİ",
+            "district": "SİNOP / GERZE",
+            "reason": "moved to SİNOP / MERKEZ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 77060,
+            "name": "DÜNDAR KÖYÜ",
+            "district": "SİVAS / HAFİK",
+            "reason": "moved to SİVAS / DOĞANŞAR (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 79420,
+            "name": "GÖKKÖY KÖYÜ, MERKEZ MEVKİİ",
+            "district": "TOKAT / REŞADİYE",
+            "reason": "moved to TOKAT / ALMUS (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 79421,
+            "name": "GÖKKÖY KÖYÜ, KEŞLİK MEVKİİ",
+            "district": "TOKAT / REŞADİYE",
+            "reason": "moved to TOKAT / ALMUS (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 80452,
+            "name": "SELAHADDİN EYYUBİ MAHALLESİ",
+            "district": "ŞANLIURFA / VİRANŞEHİR",
+            "reason": "renamed to SELAHATTİNİEYYUBİ MAHALLESİ (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 140126,
+            "name": "ERKENT KÖYÜ, KÖYÜN KENDİSİ MEVKİİ",
+            "district": "SİİRT / PERVARİ",
+            "reason": "moved to SİİRT / ERUH (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 149851,
+            "name": "UZUNKAVAK MAHALLESİ",
+            "district": "HATAY / REYHANLI",
+            "reason": "moved to HATAY / KUMLU (e-İçişleri, October 2026)"
+        },
+        {
+            "id": 190795,
+            "name": "PEHLİVANLI MAHALLESİ",
+            "district": "ERZURUM / TORTUM",
+            "reason": "moved to ERZURUM / UZUNDERE (e-İçişleri, October 2026)"
+        }
+    ]
+}

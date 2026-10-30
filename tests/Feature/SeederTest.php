@@ -136,15 +136,44 @@ class SeederTest extends TestCase
 
         // Two official köys one letter apart keep separate rows and their own bağlı (Gümüşhane Merkez)
         $tandirlik = Neighborhood::where('district_id', 1369)->where('name', 'TANDIRLIK KÖYÜ')->sole();
-        $bandirlik = Neighborhood::where('district_id', 1369)->where('name', 'BANDIRLIK KÖYÜ')->sole();
+        $bandirlik = Neighborhood::where('district_id', 1369)->where('name', 'BANDIRLAK KÖYÜ')->sole();
         $this->assertContains('TANDIRLIK KÖYÜ, FERHATAĞA', $tandirlik->children()->pluck('name')->all());
-        $this->assertNotContains('BANDIRLIK KÖYÜ, FERHATAĞA', $bandirlik->children()->pluck('name')->all());
+        $this->assertNotContains('BANDIRLAK KÖYÜ, FERHATAĞA', $bandirlik->children()->pluck('name')->all());
 
         // A bağlı hangs under the köy, not under a same-named mahalle (Pınarbaşı, Besni)
         $this->assertSame(4370, Neighborhood::where('name', 'PINARBAŞI KÖYÜ, OĞULCUK')->sole()->parent_id);
 
         // A köy that became a mahalle keeps its bağlı under the mahalle (Osmaniye, Giresun Merkez)
         $this->assertSame(30717, Neighborhood::where('name', 'OSMANİYE MAHALLESİ, FATİH')->sole()->parent_id);
+    }
+
+    public function test_official_spelling_and_inactive_records(): void
+    {
+        (new TurkiyeSeeder())->setContainer($this->app)->run();
+
+        // One-letter variants carry the official spelling; ids are unchanged (Feke, Adana)
+        $this->assertSame('KEKLİKÇE MAHALLESİ', Neighborhood::find(325)->name);
+        $this->assertSame(0, DB::table('neighborhoods')->where('name', 'KEKLİKÇİ MAHALLESİ')->count());
+
+        // A renamed köy carries its new name into its bağlı, which stay linked (Gönen, Gerger)
+        $gonen = Neighborhood::where('district_id', 1347)->where('name', 'GÖNEN KÖYÜ')->sole();
+        $this->assertTrue($gonen->children()->exists());
+        $this->assertSame(0, DB::table('neighborhoods')->where('name', 'like', 'GÖNAN KÖYÜ%')->count());
+
+        // Renamed or moved places are kept for existing foreign keys but inactive
+        $inactive = json_decode(file_get_contents(__DIR__ . '/../../src/Database/sql-dumps/inactive.json'), true)['neighborhoods'];
+        $this->assertCount(28, $inactive);
+        $this->assertSame(28, DB::table('neighborhoods')->whereIn('id', array_column($inactive, 'id'))->where('is_active', false)->count());
+        $this->assertSame(28, DB::table('neighborhoods')->where('is_active', false)->count());
+
+        $this->assertFalse(Neighborhood::find(40706)->is_active);          // ŞİŞLİ: MERKEZ  ->
+        $this->assertTrue(Neighborhood::where('district_id', 1663)        //        ŞİŞLİ MERKEZ
+            ->where('name', 'ŞİŞLİ MERKEZ MAHALLESİ')->sole()->is_active);
+        $this->assertFalse(Neighborhood::find(23690)->is_active);          // BALIBIDIK moved Yapraklı -> Merkez
+        $this->assertTrue(Neighborhood::where('district_id', 1232)->where('name', 'BALIBIDIK KÖYÜ')->sole()->is_active);
+
+        // No mahalle carries its own district as a fake belde prefix
+        $this->assertSame(0, DB::table('neighborhoods')->where('name', 'like', 'DÜZİÇİ BELDESİ,%')->count());
     }
 
     public function test_seeder_prefers_published_dumps(): void

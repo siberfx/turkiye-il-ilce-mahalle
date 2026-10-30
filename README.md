@@ -28,6 +28,7 @@ A Laravel package that ships the complete administrative address hierarchy of T�
   - [Querying](#querying)
   - [Relationships](#relationships)
   - [Mahalle, köy and bağlı](#mahalle-köy-and-bağlı)
+  - [City order (big cities first)](#city-order-big-cities-first)
   - [Active scope](#active-scope)
   - [Validation](#validation)
   - [Dependent dropdowns (city → district → neighborhood)](#dependent-dropdowns-city--district--neighborhood)
@@ -90,14 +91,15 @@ cities                  districts                 neighborhoods
 id          PK          id          PK            id           PK
 name                    city_id     FK → cities   city_id      FK → cities
 slug        unique      name                      district_id  FK → districts
-is_active               slug                      name
-                        is_active                 slug
+sort_order              slug                      name
+is_active               is_active                 slug
                                                   type         mahalle | koy | bagli
                                                   parent_id    FK → neighborhoods (köy of a bağlı)
                                                   is_active
 ```
 
 - `cities.id` is the official plate code (1 = Adana, 6 = Ankara, 34 = İstanbul, …).
+- `cities.sort_order` puts the configured big cities first and the rest in Turkish alphabetical order. See [City order](#city-order-big-cities-first).
 - `neighborhoods.city_id` is denormalised so you can filter neighborhoods by city without a join.
 - `neighborhoods.type` tells mahalle, köy and bağlı apart; `parent_id` links a bağlı (mevkii, mezra, …) to its köy. See [Mahalle, köy and bağlı](#mahalle-köy-and-bağlı).
 - Foreign keys cascade on delete. Tables have no timestamps.
@@ -227,6 +229,34 @@ Route::get('/api/villages/{koy}/bagli', fn (Neighborhood $koy) =>
     $koy->children()->active()->orderBy('name')->get(['id', 'name'])
 );
 ```
+
+### City order (big cities first)
+
+Most users live in a handful of provinces, so city pickers usually list the big cities first instead of starting at Adana. `City::ordered()` does that:
+
+```php
+City::ordered()->pluck('name');
+// İSTANBUL, ANKARA, İZMİR, ADANA, ADIYAMAN, AFYONKARAHİSAR, AĞRI, … ZONGULDAK
+
+City::active()->ordered()->get(['id', 'name']);   // for a <select>
+```
+
+- The cities listed first come from `featured_cities` in the config (plate codes). The default is the three most populous provinces: **İstanbul (34), Ankara (6), İzmir (35)**.
+- All other cities follow in **Turkish alphabetical order** (`ÇANAKKALE` after `BURSA`, `IĞDIR` before `ISPARTA` before `İZMİR`, `ŞANLIURFA` after `SİVAS`), regardless of the database collation.
+- The order is stored in `cities.sort_order` (1, 2, 3, …), so you can also `orderBy('sort_order')` in your own queries and joins.
+
+Change the featured cities in `.env` or the config, then recalculate:
+
+```dotenv
+TURKIYE_FEATURED_CITIES=34,6,35,16,7    # İstanbul, Ankara, İzmir, Bursa, Antalya
+```
+
+```bash
+php artisan turkiye:sort-cities           # from the config
+php artisan turkiye:sort-cities 34 35 16  # or pass plate codes directly
+```
+
+The seeder and the migration that adds the column apply the configured order automatically.
 
 ### Active scope
 
@@ -440,6 +470,15 @@ php artisan turkiye:migrate --force    # allow running in production
 php artisan turkiye:migrate --fresh    # ⚠ drops ALL tables of the database first (migrate:fresh)
 ```
 
+### `turkiye:sort-cities`
+
+Recalculates `cities.sort_order`: featured cities first, then Turkish alphabetical order. See [City order](#city-order-big-cities-first).
+
+```bash
+php artisan turkiye:sort-cities            # featured cities from config('turkiye-package.featured_cities')
+php artisan turkiye:sort-cities 34 6 35 16 # İstanbul, Ankara, İzmir, Bursa first
+```
+
 ### `turkiye:publish`
 
 Publishes package files into your application. With no option, everything is published.
@@ -479,6 +518,9 @@ return [
     // Foreign key column names
     'cities_relation_id' => env('TURKIYE_CITIES_RELATION_ID', 'city_id'),
     'districts_relation_id' => env('TURKIYE_DISTRICTS_RELATION_ID', 'district_id'),
+
+    // Cities listed first by City::ordered(); default İstanbul, Ankara, İzmir
+    'featured_cities' => array_map(intval(...), array_filter(explode(',', (string) env('TURKIYE_FEATURED_CITIES', '34,6,35')))),
 
     // Model classes used by the relationships
     'city_model' => Siberfx\TurkiyePackage\Models\City::class,
@@ -586,8 +628,8 @@ The neighborhood level started from the postal (PTT) address register and has be
 ¹ The official bağlı list also contains 3 water administrations attached to a metropolitan municipality; they are not places and are not imported.
 
 - Records that were missing from the original dataset were added with IDs starting at **1,000,000**, so existing IDs — and any foreign keys pointing at them in your application — never change.
-- About 2,100 official names (mahalle, köy and bağlı) differ from the dataset by a single letter (e.g. `KEKLİKÇE` / `KEKLİKÇİ`); these are the same places and were kept under their existing IDs and spelling.
-- Records are never deleted or renumbered by a data update. If a place moves to another district, the new location is added and the old row is kept.
+- Names use the official spelling. About 2,000 records that differed by a single letter (e.g. `KEKLİKÇİ` → `KEKLİKÇE`) were renamed in place, keeping their IDs; when a köy is renamed, its bağlı are renamed with it. Note that renamed records also get a new `slug`.
+- Records are never deleted or renumbered by a data update. When a place was renamed or moved to another district, the current record has its own row and the old row is kept with `is_active = false` (28 rows, listed with the reason in [`src/Database/sql-dumps/inactive.json`](src/Database/sql-dumps/inactive.json)). Filter with `active()` to hide them.
 
 Found a missing or outdated record? Please open an [issue](https://github.com/siberfx/turkiye-il-ilce-mahalle/issues) with the official source.
 
@@ -611,6 +653,8 @@ DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=5432 DB_DATABASE=testing DB_USERNA
 | `tests/Feature/ReseedTest.php`             | Re-seeding keeps application rows that reference the address tables and `is_active` flags; parents written before children with foreign keys on; ID sequences usable afterwards |
 | `tests/Feature/CustomConfigurationTest.php`| Custom table and foreign key column names across migrations, seeder and models          |
 | `tests/Feature/ServiceProviderTest.php`    | Provider registration, `turkiye:migrate`, `turkiye:publish`, model relationships, `active()` scope |
+| `tests/Feature/CityOrderingTest.php`       | `City::ordered()`, default featured cities, `turkiye:sort-cities`, `TURKIYE_FEATURED_CITIES`, ordering an existing installation on migrate |
+| `tests/Unit/CityOrderTest.php`             | Turkish alphabetical comparison, featured-first ordering                                 |
 | `tests/Unit/NeighborhoodTypeTest.php`      | Deriving mahalle / köy / bağlı from a name, stable enum values                           |
 
 Run a single file or test:
