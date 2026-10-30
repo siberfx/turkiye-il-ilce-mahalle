@@ -32,6 +32,14 @@ class TurkiyeSeeder extends Seeder
 
     /**
      * Run the database seeds.
+     *
+     * Rows are upserted by id, never truncated or deleted: re-running the seeder adds new
+     * records and refreshes existing ones in place, so foreign keys from application tables
+     * (e.g. an addresses table) stay valid and their rows are untouched. `is_active` is only
+     * set for new rows, so records you deactivated stay deactivated.
+     *
+     * Parents are always written before their children (cities, districts, köy/mahalle,
+     * then bağlı), so foreign key checks can stay enabled on every driver.
      */
     public function run(): void
     {
@@ -39,23 +47,13 @@ class TurkiyeSeeder extends Seeder
             set_time_limit(0);
         }
 
-        $this->disableForeignKeyChecks();
+        DB::transaction(function (): void {
+            $this->importCities();
+            $this->importDistricts();
+            $this->importNeighborhoods();
+        });
 
-        try {
-            // Truncate in reverse order due to foreign key constraints.
-            $this->command?->info('Truncating tables...');
-            DB::table($this->neighborhoodsTable)->truncate();
-            DB::table($this->districtsTable)->truncate();
-            DB::table($this->citiesTable)->truncate();
-
-            DB::transaction(function (): void {
-                $this->importCities();
-                $this->importDistricts();
-                $this->importNeighborhoods();
-            });
-        } finally {
-            $this->enableForeignKeyChecks();
-        }
+        $this->syncSequences();
     }
 
     /**
@@ -87,33 +85,38 @@ class TurkiyeSeeder extends Seeder
         );
     }
 
-    protected function disableForeignKeyChecks(): void
+    /**
+     * Insert new rows and update existing ones by id; `is_active` is never overwritten.
+     *
+     * @param  iterable<array<string, mixed>>  $rows
+     */
+    protected function upsertInChunks(string $table, iterable $rows): void
     {
-        match (DB::connection()->getDriverName()) {
-            'mysql', 'mariadb' => DB::statement('SET FOREIGN_KEY_CHECKS=0;'),
-            'sqlite' => DB::statement('PRAGMA foreign_keys = OFF;'),
-            'pgsql' => DB::statement('SET session_replication_role = replica;'),
-            default => null,
-        };
-    }
+        foreach (collect($rows)->chunk($this->chunkSize) as $chunk) {
+            $chunk = $chunk->values()->all();
+            $update = array_values(array_diff(array_keys($chunk[0]), ['id', 'is_active']));
 
-    protected function enableForeignKeyChecks(): void
-    {
-        match (DB::connection()->getDriverName()) {
-            'mysql', 'mariadb' => DB::statement('SET FOREIGN_KEY_CHECKS=1;'),
-            'sqlite' => DB::statement('PRAGMA foreign_keys = ON;'),
-            'pgsql' => DB::statement('SET session_replication_role = DEFAULT;'),
-            default => null,
-        };
+            DB::table($table)->upsert($chunk, ['id'], $update);
+        }
     }
 
     /**
-     * @param  iterable<array<string, mixed>>  $rows
+     * PostgreSQL does not advance an id sequence for explicit ids; move each sequence past
+     * the highest id so the application can keep creating rows.
      */
-    protected function insertInChunks(string $table, iterable $rows): void
+    protected function syncSequences(): void
     {
-        foreach (collect($rows)->chunk($this->chunkSize) as $chunk) {
-            DB::table($table)->insert($chunk->values()->all());
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        foreach ([$this->citiesTable, $this->districtsTable, $this->neighborhoodsTable] as $table) {
+            $table = DB::connection()->getTablePrefix() . $table;
+
+            DB::statement(
+                "select setval(pg_get_serial_sequence(?, 'id'), coalesce((select max(id) from \"{$table}\"), 1))",
+                [$table]
+            );
         }
     }
 
@@ -127,23 +130,33 @@ class TurkiyeSeeder extends Seeder
             'is_active' => true,
         ], $this->parseDump('cities.sql', 2));
 
-        $this->insertInChunks($this->citiesTable, $rows);
+        $this->upsertInChunks($this->citiesTable, $rows);
 
         $this->command?->info(count($rows) . ' cities imported.');
     }
 
     protected function importDistricts(): void
     {
-        // Format: ('1101','37','ABANA')
-        $rows = array_map(fn (array $row): array => [
-            'id' => (int) $row[0],
-            $this->citiesRelationId => (int) $row[1],
-            'name' => $row[2],
-            'slug' => Str::slug($row[2]),
-            'is_active' => true,
-        ], $this->parseDump('districts.sql', 3));
+        $cityIds = array_flip(DB::table($this->citiesTable)->pluck('id')->all());
 
-        $this->insertInChunks($this->districtsTable, $rows);
+        // Format: ('1101','37','ABANA'); districts of unknown cities are skipped.
+        $rows = [];
+
+        foreach ($this->parseDump('districts.sql', 3) as [$id, $cityId, $name]) {
+            if (! isset($cityIds[(int) $cityId])) {
+                continue;
+            }
+
+            $rows[] = [
+                'id' => (int) $id,
+                $this->citiesRelationId => (int) $cityId,
+                'name' => $name,
+                'slug' => Str::slug($name),
+                'is_active' => true,
+            ];
+        }
+
+        $this->upsertInChunks($this->districtsTable, $rows);
 
         $this->command?->info(count($rows) . ' districts imported.');
     }
@@ -187,7 +200,10 @@ class TurkiyeSeeder extends Seeder
             ];
         }
 
-        $this->insertInChunks($this->neighborhoodsTable, $rows);
+        // Köy and mahalle before bağlı, so every parent_id points at an existing row.
+        usort($rows, fn (array $a, array $b): int => ($a['parent_id'] !== null) <=> ($b['parent_id'] !== null));
+
+        $this->upsertInChunks($this->neighborhoodsTable, $rows);
 
         $this->command?->info(count($rows) . ' neighborhoods imported.');
     }
