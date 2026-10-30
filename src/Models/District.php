@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Siberfx\TurkiyePackage\Enums\NeighborhoodType;
 
 /**
  * @property int $id
@@ -47,6 +48,14 @@ class District extends Model
             config('turkiye-package.neighborhood_model', Neighborhood::class),
             config('turkiye-package.districts_relation_id', 'district_id')
         );
+    }
+
+    /**
+     * Köy (villages) of the district.
+     */
+    public function villages(): HasMany
+    {
+        return $this->neighborhoods()->where('type', NeighborhoodType::Koy->value);
     }
 
     public function scopeActive(Builder $query): void

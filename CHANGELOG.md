@@ -2,6 +2,25 @@
 
 All notable changes to this package are documented in this file.
 
+## [2.2.0] - 2026-10-30
+
+### Added
+
+- `type` (`mahalle`, `koy`, `bagli`) and `parent_id` columns on `neighborhoods`, in a new
+  additive migration (`2026_10_30_000004_add_type_and_parent_to_neighborhoods_table`);
+  run `php artisan migrate` and re-seed to fill them
+- `NeighborhoodType` enum (cast on `Neighborhood::$type`)
+- `Neighborhood::parent()` / `children()`, `City::villages()` / `District::villages()`,
+  and `mahalle()`, `koy()`, `bagli()`, `ofType()` query scopes
+- Bağlı (mevkii, mezra, …) synced from the official e-İçişleri bağlı list: 13,763 bağlı added,
+  and 5,748 köy that previously existed only inside their bağlı names got their own row.
+  Every official il, ilçe, mahalle, köy and bağlı is now present. Neighborhoods: 75,422 → 94,933
+  (33,097 mahalle, 18,377 köy, 43,459 bağlı); 42,997 bağlı are linked to their köy
+- New records use IDs 1,001,025–1,020,535; no existing ID or foreign key was changed
+- Badges and a test overview in the README
+- Tests: `NeighborhoodTypeTest`, `NeighborhoodModelTest`, `CustomConfigurationTest`, and seeder
+  tests for types and parent links (32 tests)
+
 ## [2.1.0] - 2026-10-30
 
 ### Changed

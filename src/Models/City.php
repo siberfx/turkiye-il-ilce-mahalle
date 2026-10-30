@@ -7,6 +7,7 @@ namespace Siberfx\TurkiyePackage\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Siberfx\TurkiyePackage\Enums\NeighborhoodType;
 
 /**
  * @property int $id
@@ -46,6 +47,14 @@ class City extends Model
             config('turkiye-package.neighborhood_model', Neighborhood::class),
             config('turkiye-package.cities_relation_id', 'city_id')
         );
+    }
+
+    /**
+     * Köy (villages) of the city.
+     */
+    public function villages(): HasMany
+    {
+        return $this->neighborhoods()->where('type', NeighborhoodType::Koy->value);
     }
 
     public function scopeActive(Builder $query): void

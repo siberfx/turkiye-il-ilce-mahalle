@@ -1,9 +1,20 @@
 # Türkiye Addresses for Laravel
 
-A Laravel package that ships the complete administrative address hierarchy of Türkiye — **81 cities (il)**, **973 districts (ilçe)** and **75,422 neighborhoods (mahalle, köy, mevkii, mezra)** — together with migrations, a fast seeder and Eloquent models with relationships.
+[![Tests](https://github.com/siberfx/turkiye-il-ilce-mahalle/actions/workflows/laravel.yml/badge.svg?branch=main)](https://github.com/siberfx/turkiye-il-ilce-mahalle/actions/workflows/laravel.yml)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/siberfx/turkiye-address.svg)](https://packagist.org/packages/siberfx/turkiye-address)
+[![Total Downloads](https://img.shields.io/packagist/dt/siberfx/turkiye-address.svg)](https://packagist.org/packages/siberfx/turkiye-address)
+[![PHP Version](https://img.shields.io/packagist/dependency-v/siberfx/turkiye-address/php.svg)](https://packagist.org/packages/siberfx/turkiye-address)
+[![Laravel](https://img.shields.io/badge/Laravel-12%20%7C%2013-FF2D20.svg?logo=laravel&logoColor=white)](https://laravel.com)
+[![GitHub Release](https://img.shields.io/github/v/release/siberfx/turkiye-il-ilce-mahalle.svg)](https://github.com/siberfx/turkiye-il-ilce-mahalle/releases)
+[![License](https://img.shields.io/github/license/siberfx/turkiye-il-ilce-mahalle.svg)](LICENSE)
+[![Data](https://img.shields.io/badge/data-e--İçişleri%20Oct%202026-0A7BBB.svg)](https://www.e-icisleri.gov.tr/Anasayfa/MulkiIdariBolumleri.aspx)
+
+A Laravel package that ships the complete administrative address hierarchy of Türkiye — **81 cities (il)**, **973 districts (ilçe)** and **94,933 settlements (33k mahalle, 18k köy, 43k bağlı such as mevkii and mezra)** — together with migrations, a fast seeder and Eloquent models with relationships.
 
 - Works out of the box: migrations auto-load and the seeder reads the bundled SQL dumps, so nothing has to be published.
 - Database-agnostic seeder (MySQL / MariaDB, PostgreSQL, SQLite), chunked inserts inside a single transaction.
+- Mahalle, köy and bağlı told apart by a `type` column, with every bağlı (mevkii, mezra, …) linked to its köy.
+- Synced with the official Ministry of Interior inventory: every il, ilçe, mahalle, köy and bağlı is present.
 - Configurable table names, foreign key column names and model classes.
 - Laravel **12** and **13**, PHP **8.3+**.
 
@@ -16,6 +27,7 @@ A Laravel package that ships the complete administrative address hierarchy of T�
 - [Usage](#usage)
   - [Querying](#querying)
   - [Relationships](#relationships)
+  - [Mahalle, köy and bağlı](#mahalle-köy-and-bağlı)
   - [Active scope](#active-scope)
   - [Validation](#validation)
   - [Dependent dropdowns (city → district → neighborhood)](#dependent-dropdowns-city--district--neighborhood)
@@ -80,11 +92,14 @@ name                    city_id     FK → cities   city_id      FK → cities
 slug        unique      name                      district_id  FK → districts
 is_active               slug                      name
                         is_active                 slug
+                                                  type         mahalle | koy | bagli
+                                                  parent_id    FK → neighborhoods (köy of a bağlı)
                                                   is_active
 ```
 
 - `cities.id` is the official plate code (1 = Adana, 6 = Ankara, 34 = İstanbul, …).
 - `neighborhoods.city_id` is denormalised so you can filter neighborhoods by city without a join.
+- `neighborhoods.type` tells mahalle, köy and bağlı apart; `parent_id` links a bağlı (mevkii, mezra, …) to its köy. See [Mahalle, köy and bağlı](#mahalle-köy-and-bağlı).
 - Foreign keys cascade on delete. Tables have no timestamps.
 - Names are stored in upper case as published officially (e.g. `İSTANBUL`, `KADIKÖY`); slugs are ASCII (`istanbul`, `kadikoy`).
 
@@ -128,8 +143,12 @@ $options = City::orderBy('name')->pluck('name', 'id');
 | `City`         | `neighborhoods()`  | `HasMany`   |
 | `District`     | `city()`           | `BelongsTo` |
 | `District`     | `neighborhoods()`  | `HasMany`   |
+| `City`         | `villages()`       | `HasMany`   |
+| `District`     | `villages()`       | `HasMany`   |
 | `Neighborhood` | `district()`       | `BelongsTo` |
 | `Neighborhood` | `city()`           | `BelongsTo` |
+| `Neighborhood` | `parent()`         | `BelongsTo` |
+| `Neighborhood` | `children()`       | `HasMany`   |
 
 ```php
 $city = City::find(35);
@@ -153,6 +172,60 @@ $cities = City::withCount(['districts', 'neighborhoods'])->get();
 
 // Cities with more than 20 districts
 $big = City::has('districts', '>', 20)->get();
+```
+
+### Mahalle, köy and bağlı
+
+The `neighborhoods` table holds the three kinds of settlement below a district, told apart by `type` (cast to the `NeighborhoodType` enum):
+
+| `type`    | Enum                       | What it is                                                              | Example name                          |
+| --------- | -------------------------- | ----------------------------------------------------------------------- | ------------------------------------- |
+| `mahalle` | `NeighborhoodType::Mahalle` | Neighborhood, including mahalles inside a belde (town)                   | `KADIKÖY MAHALLESİ`, `KÖMÜR BELDESİ, GAZİ MAHALLESİ` |
+| `koy`     | `NeighborhoodType::Koy`     | Village                                                                  | `AKDURAK KÖYÜ`                        |
+| `bagli`   | `NeighborhoodType::Bagli`   | Bağlı: a mevkii, mezra, yayla evleri, … that belongs to a köy (`parent_id`) | `AKDURAK KÖYÜ, ÇAKMAK MEZRASI`        |
+
+Mahalle and köy are the same administrative level (both sit directly under the district and have a muhtar), so they share the table; a bağlı points at its köy through `parent_id`.
+
+```php
+use Siberfx\TurkiyePackage\Enums\NeighborhoodType;
+use Siberfx\TurkiyePackage\Models\District;
+use Siberfx\TurkiyePackage\Models\Neighborhood;
+
+$district = District::find(1182); // BESNİ
+
+// Only mahalles / only köys / only bağlı
+$mahalleler = $district->neighborhoods()->mahalle()->orderBy('name')->get();
+$koyler     = $district->villages()->orderBy('name')->get();     // same as ->neighborhoods()->koy()
+$bagli      = $district->neighborhoods()->bagli()->get();
+$sameThing  = Neighborhood::ofType(NeighborhoodType::Koy)->where('district_id', 1182)->get();
+
+// The bağlı of a köy, and the köy of a bağlı
+$koy = Neighborhood::find(4308);                   // AKDURAK KÖYÜ
+$koy->children->pluck('name');                     // AKDURAK KÖYÜ, ÇAKMAK MEZRASI, …
+$koy->children()->first()->parent->is($koy);       // true
+
+// Branch on the type
+if ($neighborhood->type === NeighborhoodType::Bagli) {
+    $label = $neighborhood->parent?->name;
+}
+
+// Counts per type for a city
+Neighborhood::where('city_id', 2)
+    ->selectRaw('type, count(*) as total')
+    ->groupBy('type')
+    ->pluck('total', 'type');      // ['bagli' => …, 'koy' => …, 'mahalle' => …]
+```
+
+A typical address form offers mahalle and köy, and the bağlı only once a köy is chosen:
+
+```php
+Route::get('/api/districts/{district}/settlements', fn (District $district) =>
+    $district->neighborhoods()->whereIn('type', ['mahalle', 'koy'])->active()->orderBy('name')->get(['id', 'name', 'type'])
+);
+
+Route::get('/api/villages/{koy}/bagli', fn (Neighborhood $koy) =>
+    $koy->children()->active()->orderBy('name')->get(['id', 'name'])
+);
 ```
 
 ### Active scope
@@ -493,24 +566,28 @@ php artisan db:seed --class="Database\Seeders\TurkiyeSeeder"
 | ------------- | ------ | --------------------------------------------------------------------- |
 | Cities        | 81     | IDs are the official plate codes                                      |
 | Districts     | 973    | Every province's district count matches the official administrative list |
-| Neighborhoods | 75,422 | ~33k `MAHALLESİ`, ~23k `MEVKİİ`, ~12.6k `KÖYÜ`, ~5k `MEZRASI`, ~1.4k `EVLERİ` |
+| Neighborhoods | 94,933 | 33,097 mahalle · 18,377 köy · 43,459 bağlı (mevkii, mezra, yayla evleri, …) |
 
-The neighborhood level follows the postal (PTT) address register, so besides mahalle it also contains villages (köy), localities (mevkii) and hamlets (mezra). Street (sokak) level data is not included.
+The neighborhood level started from the postal (PTT) address register and has been completed from the official Ministry of Interior lists (see below). Every köy has its own row, and 42,997 bağlı are linked to their köy through `parent_id`; the remaining 462 are legacy postal entries whose köy no longer exists officially (most became mahalles in the 2012 metropolitan reform), so their `parent_id` is `null`. Street (sokak) level data is not included.
 
 ### Source and official reference
 
-Mahalle and köy records are checked against the official inventory of administrative divisions published by the Ministry of Interior (İçişleri Bakanlığı, İller İdaresi Genel Müdürlüğü):
+İl, ilçe, mahalle, köy and bağlı records are checked against the official inventory of administrative divisions published by the Ministry of Interior (İçişleri Bakanlığı, İller İdaresi Genel Müdürlüğü):
 
 **[Türkiye Mülki İdare Bölümleri Envanteri — e-icisleri.gov.tr](https://www.e-icisleri.gov.tr/Anasayfa/MulkiIdariBolumleri.aspx)**
 
 | Official list (October 2026) | Official count | Present in this package |
 | ---------------------------- | -------------- | ----------------------- |
-| İl (province)                | 81             | 81                      |
+| İl (province)                | 81             | all                     |
+| İlçe (district)              | 922 + 51 `MERKEZ` | all                  |
 | Mahalle (neighborhood)       | 32,327         | all                     |
 | Köy (village)                | 18,210         | all                     |
+| Bağlı (attached to a köy)    | 23,570         | all 23,567 places¹      |
+
+¹ The official bağlı list also contains 3 water administrations attached to a metropolitan municipality; they are not places and are not imported.
 
 - Records that were missing from the original dataset were added with IDs starting at **1,000,000**, so existing IDs — and any foreign keys pointing at them in your application — never change.
-- About 940 official names differ from the dataset by a single letter (e.g. `KEKLİKÇE` / `KEKLİKÇİ`); these are the same places and were kept under their existing IDs and spelling.
+- About 2,100 official names (mahalle, köy and bağlı) differ from the dataset by a single letter (e.g. `KEKLİKÇE` / `KEKLİKÇİ`); these are the same places and were kept under their existing IDs and spelling.
 - Records are never deleted or renumbered by a data update. If a place moves to another district, the new location is added and the old row is kept.
 
 Found a missing or outdated record? Please open an [issue](https://github.com/siberfx/turkiye-il-ilce-mahalle/issues) with the official source.
@@ -522,7 +599,22 @@ composer install
 composer test
 ```
 
-The test suite runs against an in-memory SQLite database and checks the full import, including referential integrity between cities, districts and neighborhoods.
+The test suite runs against an in-memory SQLite database and is run in CI on PHP 8.3, 8.4 and 8.5 with Laravel 12 and 13.
+
+| Test file                                  | Covers                                                                                   |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `tests/Feature/SeederTest.php`             | Full import: exact row counts, counts per type, referential integrity, bağlı → köy links, records synced from the official lists, escaped names, published-dump override |
+| `tests/Feature/NeighborhoodModelTest.php`  | `type` enum cast and default, `mahalle()` / `koy()` / `bagli()` / `ofType()` scopes, `parent()` / `children()`, `villages()`, `ON DELETE SET NULL` for bağlı |
+| `tests/Feature/CustomConfigurationTest.php`| Custom table and foreign key column names across migrations, seeder and models          |
+| `tests/Feature/ServiceProviderTest.php`    | Provider registration, `turkiye:migrate`, `turkiye:publish`, model relationships, `active()` scope |
+| `tests/Unit/NeighborhoodTypeTest.php`      | Deriving mahalle / köy / bağlı from a name, stable enum values                           |
+
+Run a single file or test:
+
+```bash
+vendor/bin/phpunit tests/Feature/NeighborhoodModelTest.php
+vendor/bin/phpunit --filter test_seeder_sets_types_and_links_bagli_to_their_koy
+```
 
 ## Changelog
 

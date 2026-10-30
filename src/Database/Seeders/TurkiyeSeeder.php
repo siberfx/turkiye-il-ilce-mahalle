@@ -8,6 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Siberfx\TurkiyePackage\Enums\NeighborhoodType;
 
 class TurkiyeSeeder extends Seeder
 {
@@ -152,14 +153,27 @@ class TurkiyeSeeder extends Seeder
         // district id => city id, to denormalise city_id onto each neighborhood.
         $districtCities = DB::table($this->districtsTable)->pluck($this->citiesRelationId, 'id')->all();
 
-        // Format: ('1','1104','AHMET REMZİ YÜREĞİR MAHALLESİ')
+        // Format: ('1','1104','AHMET REMZİ YÜREĞİR MAHALLESİ'), ('4309','1182','AKDURAK KÖYÜ, ÇAKMAK MEZRASI')
+        $dump = $this->parseDump('neighborhoods.sql', 3);
+
+        // "district|name" => id of every single-part row, to link a bağlı to its köy.
+        $owners = [];
+
+        foreach ($dump as [$id, $districtId, $name]) {
+            if (! str_contains($name, ',')) {
+                $owners[$districtId . '|' . $name] ??= (int) $id;
+            }
+        }
+
         $rows = [];
 
-        foreach ($this->parseDump('neighborhoods.sql', 3) as [$id, $districtId, $name]) {
+        foreach ($dump as [$id, $districtId, $name]) {
             // Skip neighborhoods of unknown districts.
             if (! isset($districtCities[$districtId])) {
                 continue;
             }
+
+            $type = NeighborhoodType::fromName($name);
 
             $rows[] = [
                 'id' => (int) $id,
@@ -167,6 +181,8 @@ class TurkiyeSeeder extends Seeder
                 $this->citiesRelationId => (int) $districtCities[$districtId],
                 'name' => $name,
                 'slug' => Str::slug($name),
+                'type' => $type->value,
+                'parent_id' => $type === NeighborhoodType::Bagli ? $this->parentId($owners, $districtId, $name) : null,
                 'is_active' => true,
             ];
         }
@@ -174,5 +190,26 @@ class TurkiyeSeeder extends Seeder
         $this->insertInChunks($this->neighborhoodsTable, $rows);
 
         $this->command?->info(count($rows) . ' neighborhoods imported.');
+    }
+
+    /**
+     * The köy row a bağlı ("X KÖYÜ, Y ...") belongs to; falls back to a same-named
+     * mahalle for köys that became mahalles in metropolitan provinces.
+     *
+     * @param  array<string, int>  $owners
+     */
+    protected function parentId(array $owners, string $districtId, string $name): ?int
+    {
+        // Only "X KÖYÜ, Y ..." names point at a parent; a standalone bağlı has none.
+        if (! str_contains($name, ',')) {
+            return null;
+        }
+
+        $head = trim(explode(',', $name, 2)[0]);
+
+        return $owners[$districtId . '|' . $head]
+            ?? (str_ends_with($head, ' KÖYÜ')
+                ? $owners[$districtId . '|' . substr($head, 0, -strlen(' KÖYÜ')) . ' MAHALLESİ'] ?? null
+                : null);
     }
 }

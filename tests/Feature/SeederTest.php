@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Orchestra\Testbench\TestCase;
 use Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder;
+use Siberfx\TurkiyePackage\Enums\NeighborhoodType;
+use Siberfx\TurkiyePackage\Models\Neighborhood;
 use Siberfx\TurkiyePackage\TurkiyeAddressServiceProvider;
 
 class SeederTest extends TestCase
@@ -41,7 +43,7 @@ class SeederTest extends TestCase
         // Türkiye has 81 provinces and 973 districts.
         $this->assertSame(81, DB::table('cities')->count());
         $this->assertSame(973, DB::table('districts')->count());
-        $this->assertSame(75422, DB::table('neighborhoods')->count());
+        $this->assertSame(94933, DB::table('neighborhoods')->count());
 
         // Every district points at an existing city.
         $orphanDistricts = DB::table('districts')
@@ -72,7 +74,7 @@ class SeederTest extends TestCase
         (new TurkiyeSeeder())->setContainer($this->app)->run();
 
         // Added from the e-İçişleri mahalle/köy lists; ids start at 1,000,000.
-        $this->assertSame(1024, DB::table('neighborhoods')->where('id', '>=', 1_000_000)->count());
+        $this->assertSame(1024, DB::table('neighborhoods')->whereBetween('id', [1_000_000, 1_001_024])->count());
 
         // Gölbaşı (Adıyaman), Nurdağı (Gaziantep), Derecik (Hakkari)
         $this->assertSame('6 ŞUBAT MAHALLESİ', DB::table('neighborhoods')->where('id', 1000312)->value('name'));
@@ -81,6 +83,55 @@ class SeederTest extends TestCase
         $this->assertSame('6 ŞUBAT MAHALLESİ', DB::table('neighborhoods')->where('id', 1000906)->value('name'));
         $this->assertSame('ULAŞAN KÖYÜ', DB::table('neighborhoods')->where('id', 1001022)->value('name'));
         $this->assertSame(30, DB::table('neighborhoods')->where('id', 1001022)->value('city_id'));
+    }
+
+    public function test_seeder_sets_types_and_links_bagli_to_their_koy(): void
+    {
+        (new TurkiyeSeeder())->setContainer($this->app)->run();
+
+        $types = DB::table('neighborhoods')->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type');
+        $this->assertEquals(['bagli' => 43459, 'koy' => 18377, 'mahalle' => 33097], $types->sort()->all() + []);
+        $this->assertSame(42997, DB::table('neighborhoods')->whereNotNull('parent_id')->count());
+
+        // Existing köy row with existing and newly synced bağlı (Akdurak, Besni)
+        $akdurak = Neighborhood::find(4308);
+        $this->assertSame(NeighborhoodType::Koy, $akdurak->type);
+        $this->assertNull($akdurak->parent_id);
+        $children = $akdurak->children()->pluck('name')->all();
+        $this->assertContains('AKDURAK KÖYÜ, ÇAKMAK MEZRASI', $children);
+        $this->assertContains('AKDURAK KÖYÜ, DAĞDİBİ', $children);
+
+        // Köy that previously existed only inside its bağlı names (Mutlu, Çelikhan)
+        $mutlu = Neighborhood::where('district_id', 1246)->where('name', 'MUTLU KÖYÜ')->sole();
+        $this->assertGreaterThanOrEqual(1_001_025, $mutlu->id);
+        $this->assertSame($mutlu->id, Neighborhood::find(4411)->parent_id);
+        $this->assertTrue($mutlu->district->villages->contains($mutlu));
+
+        // Belde mahalles stay mahalle
+        $this->assertSame(
+            NeighborhoodType::Mahalle,
+            Neighborhood::where('name', 'like', '% BELDESİ, % MAHALLESİ')->first()->type
+        );
+
+        // Bağlı always belong to a köy (or a former köy, now a mahalle) of the same district
+        $foreign = DB::table('neighborhoods as b')
+            ->join('neighborhoods as p', 'b.parent_id', '=', 'p.id')
+            ->where(fn ($q) => $q->whereColumn('b.district_id', '!=', 'p.district_id')->orWhere('p.type', 'bagli'))
+            ->count();
+        $this->assertSame(0, $foreign);
+        $this->assertSame(0, DB::table('neighborhoods')->whereColumn('parent_id', 'id')->count());
+
+        // Two official köys one letter apart keep separate rows and their own bağlı (Gümüşhane Merkez)
+        $tandirlik = Neighborhood::where('district_id', 1369)->where('name', 'TANDIRLIK KÖYÜ')->sole();
+        $bandirlik = Neighborhood::where('district_id', 1369)->where('name', 'BANDIRLIK KÖYÜ')->sole();
+        $this->assertContains('TANDIRLIK KÖYÜ, FERHATAĞA', $tandirlik->children()->pluck('name')->all());
+        $this->assertNotContains('BANDIRLIK KÖYÜ, FERHATAĞA', $bandirlik->children()->pluck('name')->all());
+
+        // A bağlı hangs under the köy, not under a same-named mahalle (Pınarbaşı, Besni)
+        $this->assertSame(4370, Neighborhood::where('name', 'PINARBAŞI KÖYÜ, OĞULCUK')->sole()->parent_id);
+
+        // A köy that became a mahalle keeps its bağlı under the mahalle (Osmaniye, Giresun Merkez)
+        $this->assertSame(30717, Neighborhood::where('name', 'OSMANİYE MAHALLESİ, FATİH')->sole()->parent_id);
     }
 
     public function test_seeder_prefers_published_dumps(): void
