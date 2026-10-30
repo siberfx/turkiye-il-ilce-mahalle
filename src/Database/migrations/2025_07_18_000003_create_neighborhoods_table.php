@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $config = config('turkiye-package');
         $tableName = $config['neighborhoods_table'] ?? 'neighborhoods';
@@ -15,7 +15,6 @@ return new class extends Migration
 
         $relationCityName = $config['cities_relation_id'] ?? 'city_id';
         $relationDistrictName = $config['districts_relation_id'] ?? 'district_id';
-
 
         Schema::create($tableName, function (Blueprint $table) use ($districtsTable, $citiesTable, $relationCityName, $relationDistrictName) {
             $table->id();
@@ -44,7 +43,7 @@ return new class extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         $config = config('turkiye-package');
         $tableName = $config['neighborhoods_table'] ?? 'neighborhoods';

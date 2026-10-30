@@ -1,0 +1,15 @@
+<?php
+
+namespace Database\Seeders;
+
+use Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder as BaseTurkiyeSeeder;
+
+/**
+ * Seeds cities, districts and neighborhoods from the SQL dumps.
+ *
+ * Reads database/sql-dumps/*.sql when present, otherwise the dumps shipped
+ * with the package. Override methods here to customise the import.
+ */
+class TurkiyeSeeder extends BaseTurkiyeSeeder
+{
+}

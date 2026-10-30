@@ -5,69 +5,41 @@ declare(strict_types=1);
 namespace Siberfx\TurkiyePackage\Console\Commands;
 
 use Illuminate\Console\Command;
+use Siberfx\TurkiyePackage\TurkiyeAddressServiceProvider;
 
 class PublishTurkiyeAssets extends Command
 {
-    protected $signature = 'turkiye:publish 
+    protected $signature = 'turkiye:publish
                             {--force : Overwrite any existing files}
                             {--config : Publish only the config file}
                             {--migrations : Publish only the migration files}
-                            {--seeders : Publish only the seeder files and SQL dumps}';
-                            
+                            {--seeders : Publish only the seeder and SQL dumps}';
+
     protected $description = 'Publish the Türkiye package assets (config, migrations, seeders)';
+
+    /** @var array<string, string> tag => label */
+    private const array TAGS = [
+        'config' => 'Configuration file',
+        'migrations' => 'Migrations',
+        'seeders' => 'Seeder and SQL dumps',
+    ];
 
     public function handle(): int
     {
-        $options = [
-            '--provider' => 'Siberfx\\TurkiyePackage\\TurkiyeAdreslerServiceProvider',
+        $selected = array_filter(array_keys(self::TAGS), fn (string $tag): bool => (bool) $this->option($tag));
+
+        // No specific option given: publish everything.
+        $tags = $selected ?: array_keys(self::TAGS);
+
+        $this->call('vendor:publish', [
+            '--provider' => TurkiyeAddressServiceProvider::class,
+            '--tag' => $tags,
             '--force' => $this->option('force'),
-        ];
+        ]);
 
-        $tags = [];
-        
-        // If no specific options are provided, publish everything
-        $publishAll = !$this->option('config') && !$this->option('migrations') && !$this->option('seeders');
-
-        if ($publishAll || $this->option('config')) {
-            $tags[] = 'config';
-        }
-        
-        if ($publishAll || $this->option('migrations')) {
-            $tags[] = 'migrations';
-        }
-        
-        if ($publishAll || $this->option('seeders')) {
-            $tags[] = 'seeders';
-        }
-
-        if (empty($tags)) {
-            $this->error('No publishable resources selected!');
-
-            return self::FAILURE;
-        }
-
-        $options['--tag'] = $tags;
-
-        $this->call('vendor:publish', $options);
-        
-        // Display success messages based on what was published
-        $published = [];
-        
-        if (in_array('config', $tags)) {
-            $published[] = 'Configuration file';
-        }
-        
-        if (in_array('migrations', $tags)) {
-            $published[] = 'Migrations';
-        }
-        
-        if (in_array('seeders', $tags)) {
-            $published[] = 'Seeders and SQL dumps';
-        }
-        
-        $this->info(sprintf(
-            'Successfully published %s!',
-            implode(', ', $published)
+        $this->components->info(sprintf(
+            'Published: %s.',
+            implode(', ', array_map(fn (string $tag): string => self::TAGS[$tag], $tags))
         ));
 
         return self::SUCCESS;

@@ -1,68 +1,90 @@
-# Değişiklik Kaydı
+# Changelog
 
-Bu dosya, pakette yapılan tüm önemli değişiklikleri dokümante eder.
+All notable changes to this package are documented in this file.
 
-## [2.0.0] - 2026-06-17
+## [2.0.0] - 2026-10-30
 
-### Değişiklikler (Breaking)
+### Changed (Breaking)
 
-- Sadece Laravel 12 ve 13 desteklenir (`illuminate/support: ^12.0|^13.0`)
-- Sadece PHP 8.4 desteklenir (`php: ^8.4`)
-- `orchestra/testbench` `^10.0|^11.0`, `phpunit/phpunit` `^11.5|^12.0` olarak güncellendi
-- Tüm yapılandırma anahtarı `turkiye-package` olarak standartlaştırıldı (önceden
-  servis sağlayıcı, seeder ve migration'lar `turkiye-adresler`/`turkiye-package`
-  anahtarlarını karışık kullanıyordu; modeller her zaman varsayılana düşüyordu)
+- Only Laravel 12 and 13 are supported (`illuminate/support: ^12.0|^13.0`)
+- PHP 8.3, 8.4 and 8.5 are supported (`php: ^8.3`)
+- The service provider `TurkiyeAdreslerServiceProvider` was renamed to
+  `TurkiyeAddressServiceProvider` (no action needed when registered via package discovery)
+- Removed the unused model properties/methods and `resetAutoIncrement()` from the seeder
+- The `seeders` publish tag now publishes a thin `Database\Seeders\TurkiyeSeeder` class
+  extending the package seeder (previously a file with the package namespace was copied,
+  which broke autoloading)
+- `orchestra/testbench` updated to `^10.0|^11.0`, `phpunit/phpunit` to `^11.5|^12.0`
+- All configuration access standardised on the `turkiye-package` key (previously the
+  service provider, seeder and migrations mixed `turkiye-adresler` and `turkiye-package`,
+  so the models always fell back to the defaults)
 
-### Düzeltmeler
+### Fixed
 
-- Servis sağlayıcıdaki yanlış yayınlama yolları düzeltildi (`database/seeders` →
-  `Database/Seeders`, `database/sql-dumps` → `Database/sql-dumps`); büyük/küçük
-  harfe duyarlı sistemlerde (Linux/CI) çalışmıyordu
-- Migration'lar artık `loadMigrationsFrom` ile otomatik yükleniyor ve `migrations`
-  etiketiyle yayınlanabiliyor
-- Seeder artık sürücü-bağımsız (MySQL/MariaDB, SQLite, PostgreSQL); SQLite'ta
-  `SET FOREIGN_KEY_CHECKS` hatası giderildi
-- Seeder ilişki sütunları yapılandırmadan okunuyor; `districts` tablosundaki
-  yanlış `district_id` yerine doğru `city_id` yazılıyor
-- Migration'larda olmayan `created_at`/`updated_at` sütunlarına yazma kaldırıldı
-- Stub'daki `Siberfox` yazım hatası `Siberfx` olarak düzeltildi
-- GitHub Actions iş akışı standart testbench matrisiyle yeniden yazıldı; yanlış
-  paket adı (`siberfx/turkiye-address`) düzeltildi
-- `composer.json` `autoload-dev` (Tests\\) eklendi; `authors.website` geçersiz
-  anahtarı `homepage` olarak düzeltildi
-- Test paketi gerçek paket migration'larına karşı çalışacak şekilde düzeltildi;
-  seeder bütünlük testi eklendi
+- Wrong publish paths in the service provider (`database/seeders` → `Database/Seeders`,
+  `database/sql-dumps` → `Database/sql-dumps`); they failed on case-sensitive
+  file systems (Linux/CI)
+- Migrations are now loaded automatically via `loadMigrationsFrom` and can be published
+  with the `migrations` tag
+- The seeder is now driver-agnostic (MySQL/MariaDB, SQLite, PostgreSQL); fixed the
+  `SET FOREIGN_KEY_CHECKS` error on SQLite
+- The seeder reads relation columns from the config and writes the correct `city_id`
+  (instead of `district_id`) to the `districts` table
+- Removed writes to `created_at`/`updated_at` columns that don't exist in the migrations
+- Fixed the `Siberfox` typo in the stub (`Siberfx`)
+- Rewrote the GitHub Actions workflow with a standard testbench matrix; fixed the wrong
+  package name (`siberfx/turkiye-address`)
+- Added `autoload-dev` (`Tests\`) to `composer.json`; replaced the invalid
+  `authors.website` key with `homepage`
+- The test suite now runs against the real package migrations; added a seeder
+  integrity test
+- 2 neighborhood records containing an apostrophe (`TAN\'IN`, `KURS\'TAN`) were silently
+  skipped by the seeder; the parser now handles escaped characters (all 74,398 records
+  are imported)
+- The seeder now works without publishing the SQL dumps (a published copy is used when present)
+- `turkiye:migrate` runs only the package migrations instead of all of `database/migrations`;
+  `--seed` calls the package seeder instead of a `TurkiyeSeeder` class that may not exist
+- Foreign key checks are re-enabled even when seeding fails; the import runs in a single
+  transaction
+- Added the missing `LICENSE` file
 
-### Eklendi
+### Added
 
-- Tüm sınıflara `declare(strict_types=1)` ve dönüş tipleri eklendi
+- `declare(strict_types=1)` and return types on all classes
+- `City::neighborhoods()` and `Neighborhood::city()` relationships
+- `active()` scope and `is_active` boolean cast on all models
+- Relationships use the `city_model` / `district_model` / `neighborhood_model` config
+  options (now included in the config file)
+- `turkiye:migrate --force` option
+- Extended English README (usage examples, validation, dependent dropdowns, Livewire)
+- CI matrix: PHP 8.3 / 8.4 / 8.5 × Laravel 12 / 13
 
 ## [1.1.0] - 2025-07-18
 
-### Eklendi
+### Added
 
-- Yeni `turkiye:publish` komutu eklendi
-- Seçici yayınlama özelliği eklendi (sadece ihtiyaç duyulan dosyaları yükleme)
-- Migration dosyaları eklendi (şehirler, ilçeler ve mahalleler için)
-- Gelişmiş veri yükleme mekanizması eklendi
-- Performans iyileştirmeleri yapıldı
+- New `turkiye:publish` command
+- Selective publishing (publish only the files you need)
+- Migration files for cities, districts and neighborhoods
+- Improved data loading mechanism
+- Performance improvements
 
-### Değişiklikler
+### Changed
 
-- `turkiye:publish-assets` komutu `turkiye:publish` olarak değiştirildi
-- Yapılandırma dosyasına model sınıfları eklendi
-- Veritabanı şeması iyileştirildi
+- The `turkiye:publish-assets` command was renamed to `turkiye:publish`
+- Model classes added to the config file
+- Improved database schema
 
-### Düzeltmeler
+### Fixed
 
-- Seeder'da performans iyileştirmeleri yapıldı
-- Veri bütünlüğü için kontroller eklendi
-- Hata mesajları iyileştirildi
+- Performance improvements in the seeder
+- Added data integrity checks
+- Improved error messages
 
 ## [1.0.0] - 2025-07-15
 
-### Eklendi
+### Added
 
-- İlk kararlı sürüm yayınlandı
-- Temel şehir, ilçe ve mahalle veri yapısı eklendi
-- Temel seeder ve migration dosyaları eklendi
+- First stable release
+- Basic city, district and neighborhood data structure
+- Basic seeder and migration files

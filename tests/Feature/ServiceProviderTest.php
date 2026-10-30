@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\File;
 use Orchestra\Testbench\TestCase;
 use Siberfx\TurkiyePackage\Models\City;
 use Siberfx\TurkiyePackage\Models\District;
 use Siberfx\TurkiyePackage\Models\Neighborhood;
-use Siberfx\TurkiyePackage\TurkiyeAdreslerServiceProvider;
+use Siberfx\TurkiyePackage\TurkiyeAddressServiceProvider;
 
 class ServiceProviderTest extends TestCase
 {
     protected function getPackageProviders($app)
     {
         return [
-            TurkiyeAdreslerServiceProvider::class,
+            TurkiyeAddressServiceProvider::class,
         ];
     }
 
@@ -28,7 +29,7 @@ class ServiceProviderTest extends TestCase
     public function test_service_provider_is_loaded(): void
     {
         $this->assertTrue(
-            $this->app->providerIsLoaded(TurkiyeAdreslerServiceProvider::class),
+            $this->app->providerIsLoaded(TurkiyeAddressServiceProvider::class),
             'Service provider should be loaded.'
         );
     }
@@ -97,5 +98,34 @@ class ServiceProviderTest extends TestCase
         $this->assertEquals('Test City', $city->name);
         $this->assertEquals('Test District', $district->name);
         $this->assertEquals('Test Neighborhood', $neighborhood->name);
+
+        // Direct city <-> neighborhood relationships
+        $this->assertTrue($city->neighborhoods->first()->is($neighborhood));
+        $this->assertTrue($neighborhood->city->is($city));
+    }
+
+    public function test_active_scope_and_boolean_cast(): void
+    {
+        City::create(['name' => 'Active', 'slug' => 'active']);
+        City::create(['name' => 'Passive', 'slug' => 'passive', 'is_active' => false]);
+
+        $this->assertSame(['Active'], City::active()->pluck('name')->all());
+        $this->assertFalse(City::where('slug', 'passive')->first()->is_active);
+    }
+
+    public function test_publish_command_publishes_seeder_and_dumps(): void
+    {
+        $seeder = database_path('seeders/TurkiyeSeeder.php');
+
+        try {
+            $this->artisan('turkiye:publish', ['--seeders' => true])->assertExitCode(0);
+
+            $this->assertFileExists($seeder);
+            $this->assertFileExists(database_path('sql-dumps/neighborhoods.sql'));
+            $this->assertStringContainsString('namespace Database\Seeders;', file_get_contents($seeder));
+        } finally {
+            @unlink($seeder);
+            File::deleteDirectory(database_path('sql-dumps'));
+        }
     }
 }

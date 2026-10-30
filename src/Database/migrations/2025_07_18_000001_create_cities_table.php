@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $config = config('turkiye-package');
         $tableName = $config['cities_table'] ?? 'cities';
@@ -22,7 +22,7 @@ return new class extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         $config = config('turkiye-package');
         $tableName = $config['cities_table'] ?? 'cities';

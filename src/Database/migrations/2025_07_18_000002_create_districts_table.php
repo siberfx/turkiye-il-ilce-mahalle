@@ -3,10 +3,10 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 
-return new class extends Migration {
-    public function up()
+return new class extends Migration
+{
+    public function up(): void
     {
         $config = config('turkiye-package');
         $tableName = $config['districts_table'] ?? 'districts';
@@ -34,7 +34,7 @@ return new class extends Migration {
         });
     }
 
-    public function down()
+    public function down(): void
     {
         $config = config('turkiye-package');
         $tableName = $config['districts_table'] ?? 'districts';
