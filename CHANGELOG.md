@@ -2,6 +2,15 @@
 
 All notable changes to this package are documented in this file.
 
+## [2.1.0] - 2026-10-30
+
+### Changed
+
+- The Composer package was renamed from `siberfx/turkiye-adresler-json` to
+  `siberfx/turkiye-address`. Install it with `composer require siberfx/turkiye-address`;
+  existing installs should replace the old name in their `composer.json`
+- README install instructions updated to the new package name
+
 ## [2.0.1] - 2026-10-30
 
 ### Added

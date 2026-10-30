@@ -38,7 +38,7 @@ A Laravel package that ships the complete administrative address hierarchy of TÃ
 ## Installation
 
 ```bash
-composer require siberfx/turkiye-adresler-json
+composer require siberfx/turkiye-address
 ```
 
 The service provider (`Siberfx\TurkiyePackage\TurkiyeAddressServiceProvider`) is registered automatically through package discovery.
