@@ -12,7 +12,7 @@
 A Laravel package that ships the complete administrative address hierarchy of Türkiye — **81 cities (il)**, **973 districts (ilçe)** and **94,933 settlements (33k mahalle, 18k köy, 43k bağlı such as mevkii and mezra)** — together with migrations, a fast seeder and Eloquent models with relationships.
 
 - Works out of the box: migrations auto-load and the seeder reads the bundled SQL dumps, so nothing has to be published.
-- Database-agnostic seeder (MySQL / MariaDB, PostgreSQL, SQLite), chunked inserts inside a single transaction.
+- Database-agnostic seeder, tested in CI on MySQL, PostgreSQL and SQLite: chunked upserts inside a single transaction, with foreign key checks left on.
 - Mahalle, köy and bağlı told apart by a `type` column, with every bağlı (mevkii, mezra, …) linked to its köy.
 - Synced with the official Ministry of Interior inventory: every il, ilçe, mahalle, köy and bağlı is present.
 - Configurable table names, foreign key column names and model classes.
@@ -80,7 +80,7 @@ public function run(): void
 }
 ```
 
-> The seeder **truncates** the three tables before importing, so it is safe to re-run and always leaves you with a clean copy of the data.
+> The seeder **upserts by ID** and never truncates or deletes. Re-running it — for example after upgrading the package — adds new records and refreshes existing ones in place, so rows in your own tables that reference cities, districts or neighborhoods are left untouched, and records you deactivated (`is_active = false`) stay deactivated. Foreign key checks stay enabled, so it also works on managed databases without superuser rights.
 
 ## Database schema
 
@@ -479,7 +479,6 @@ return [
     // Foreign key column names
     'cities_relation_id' => env('TURKIYE_CITIES_RELATION_ID', 'city_id'),
     'districts_relation_id' => env('TURKIYE_DISTRICTS_RELATION_ID', 'district_id'),
-    'neighborhoods_relation_id' => env('TURKIYE_NEIGHBORHOODS_RELATION_ID', 'neighborhood_id'),
 
     // Model classes used by the relationships
     'city_model' => Siberfx\TurkiyePackage\Models\City::class,
@@ -599,12 +598,17 @@ composer install
 composer test
 ```
 
-The test suite runs against an in-memory SQLite database and is run in CI on PHP 8.3, 8.4 and 8.5 with Laravel 12 and 13.
+Locally the suite runs against an in-memory SQLite database. CI runs it on PHP 8.3, 8.4 and 8.5 with Laravel 12 and 13, and additionally against MySQL 8.4 and PostgreSQL 17. To run it against your own database, set the `DB_*` variables:
+
+```bash
+DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=5432 DB_DATABASE=testing DB_USERNAME=postgres DB_PASSWORD=secret vendor/bin/phpunit
+```
 
 | Test file                                  | Covers                                                                                   |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `tests/Feature/SeederTest.php`             | Full import: exact row counts, counts per type, referential integrity, bağlı → köy links, records synced from the official lists, escaped names, published-dump override |
+| `tests/Feature/SeederTest.php`             | Full import: idempotent re-runs, exact row counts, counts per type, referential integrity, bağlı → köy links, records synced from the official lists, escaped names, published-dump override |
 | `tests/Feature/NeighborhoodModelTest.php`  | `type` enum cast and default, `mahalle()` / `koy()` / `bagli()` / `ofType()` scopes, `parent()` / `children()`, `villages()`, `ON DELETE SET NULL` for bağlı |
+| `tests/Feature/ReseedTest.php`             | Re-seeding keeps application rows that reference the address tables and `is_active` flags; parents written before children with foreign keys on; ID sequences usable afterwards |
 | `tests/Feature/CustomConfigurationTest.php`| Custom table and foreign key column names across migrations, seeder and models          |
 | `tests/Feature/ServiceProviderTest.php`    | Provider registration, `turkiye:migrate`, `turkiye:publish`, model relationships, `active()` scope |
 | `tests/Unit/NeighborhoodTypeTest.php`      | Deriving mahalle / köy / bağlı from a name, stable enum values                           |

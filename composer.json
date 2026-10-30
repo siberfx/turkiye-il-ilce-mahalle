@@ -9,7 +9,15 @@
         "district",
         "neighborhood",
         "seeder",
-        "sql"
+        "sql",
+        "turkiye",
+        "türkiye",
+        "il",
+        "ilce",
+        "mahalle",
+        "koy",
+        "bagli",
+        "eloquent"
     ],
     "type": "library",
     "license": "MIT",

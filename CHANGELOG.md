@@ -2,6 +2,35 @@
 
 All notable changes to this package are documented in this file.
 
+## [2.2.1] - 2026-10-30
+
+### Fixed
+
+- **Re-seeding no longer deletes application data.** The seeder used to `TRUNCATE` the cities,
+  districts and neighborhoods tables. On PostgreSQL Laravel truncates with `CASCADE`, which also
+  emptied every application table with a foreign key to them (e.g. an `addresses` table). The
+  seeder now upserts by ID and never truncates or deletes: new records are added and existing
+  ones refreshed in place. **If you are on PostgreSQL, upgrade to 2.2.1 before re-seeding for
+  2.2.0.**
+- `is_active` is only set for new rows, so records you deactivated stay deactivated after a re-seed
+- The seeder no longer disables foreign key checks. On PostgreSQL that required
+  `SET session_replication_role`, which needs superuser rights and failed on managed databases
+  (RDS, Supabase, Neon, …). Parents are now always written before their children instead
+- PostgreSQL ID sequences are moved past the seeded IDs, so the application can keep creating rows
+- Districts of unknown cities are skipped, like neighborhoods of unknown districts already were
+
+### Changed
+
+- Removed the unused `neighborhoods_relation_id` config option
+- Removed the seeder's `disableForeignKeyChecks()` / `enableForeignKeyChecks()` and
+  `insertInChunks()` methods (replaced by `upsertInChunks()`); only relevant if you extended the seeder
+- More Packagist keywords (`turkiye`, `il`, `ilce`, `mahalle`, `koy`, `bagli`, …)
+
+### Added
+
+- CI jobs on MySQL 8.4 and PostgreSQL 17 for Laravel 12 and 13
+- `ReseedTest` and an idempotency test for the full import (37 tests)
+
 ## [2.2.0] - 2026-10-30
 
 ### Added

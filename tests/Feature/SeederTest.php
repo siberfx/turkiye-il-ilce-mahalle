@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase;
 use Siberfx\TurkiyePackage\Database\Seeders\TurkiyeSeeder;
 use Siberfx\TurkiyePackage\Enums\NeighborhoodType;
@@ -33,9 +34,21 @@ class SeederTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_seeder_is_idempotent(): void
+    {
+        Schema::enableForeignKeyConstraints();
+
+        (new TurkiyeSeeder())->setContainer($this->app)->run();
+        $first = DB::table('neighborhoods')->orderBy('id')->get(['id', 'name', 'type', 'parent_id'])->toJson();
+
+        (new TurkiyeSeeder())->setContainer($this->app)->run();
+
+        $this->assertSame(94933, DB::table('neighborhoods')->count());
+        $this->assertSame($first, DB::table('neighborhoods')->orderBy('id')->get(['id', 'name', 'type', 'parent_id'])->toJson());
+    }
+
     public function test_seeder_imports_bundled_dumps_with_referential_integrity(): void
     {
-        $this->assertSame('sqlite', DB::connection()->getDriverName());
         $this->assertDirectoryDoesNotExist(database_path('sql-dumps'));
 
         (new TurkiyeSeeder())->setContainer($this->app)->run();
